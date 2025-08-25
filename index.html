@@ -1,0 +1,1173 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator PRO INSTAL</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .animate-pulse-soft {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .hide {
+            display: none !important;
+        }
+        .slider {
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        .category-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        .category-card.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .admin-sidebar {
+            background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+        }
+        .product-item {
+            transition: all 0.2s ease;
+        }
+        .product-item:hover {
+            background-color: #f7fafc;
+        }
+        .dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Kalkulator PRO INSTAL</h1>
+                    <p class="text-blue-100 mt-1">Profesjonalne wyceny instalacji OZE</p>
+                </div>
+                <button onclick="showAdminLogin()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
+                    <i class="fas fa-cog mr-2"></i>Panel Admin
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Calculator -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Kalkulator Instalacji</h2>
+                    <p class="text-gray-600 mb-6">Wybierz odpowiednie produkty dla Twojego klienta</p>
+
+                    <!-- Category Selection -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Typ instalacji</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="category-card border-2 border-gray-200 rounded-lg p-4 text-center" onclick="selectCategory('pv')">
+                                <i class="fas fa-solar-panel text-3xl text-blue-500 mb-3"></i>
+                                <h4 class="font-semibold text-gray-800">Rozbudowa PV</h4>
+                                <p class="text-sm text-gray-600">Panele fotowoltaiczne</p>
+                            </div>
+                            <div class="category-card border-2 border-gray-200 rounded-lg p-4 text-center" onclick="selectCategory('battery')">
+                                <i class="fas fa-battery-full text-3xl text-green-500 mb-3"></i>
+                                <h4 class="font-semibold text-gray-800">Magazyn energii</h4>
+                                <p class="text-sm text-gray-600">Sam magazyn energii</p>
+                            </div>
+                            <div class="category-card border-2 border-gray-200 rounded-lg p-4 text-center" onclick="selectCategory('complete')">
+                                <i class="fas fa-home text-3xl text-purple-500 mb-3"></i>
+                                <h4 class="font-semibold text-gray-800">Komplet</h4>
+                                <p class="text-sm text-gray-600">Panele + magazyn</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Selection -->
+                    <div id="productSelection" class="space-y-6">
+                        <!-- PV Selection -->
+                        <div id="pvSection" class="hide">
+                            <h4 class="font-semibold mb-3 text-gray-700">Panele fotowoltaiczne</h4>
+                            <select id="pvSelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="calculatePrice()">
+                                <option value="">Wybierz moc instalacji...</option>
+                            </select>
+                        </div>
+
+                        <!-- Battery Selection -->
+                        <div id="batterySection" class="hide">
+                            <h4 class="font-semibold mb-3 text-gray-700">Magazyn energii</h4>
+                            <select id="batterySelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="calculatePrice()">
+                                <option value="">Wybierz pojemność magazynu...</option>
+                            </select>
+                        </div>
+
+                        <!-- Complete Selection -->
+                        <div id="completeSection" class="hide">
+                            <h4 class="font-semibold mb-3 text-gray-700">Komplet PV + Magazyn</h4>
+                            <select id="completeSelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="calculatePrice()">
+                                <option value="">Wybierz komplet...</option>
+                            </select>
+                            
+                            <!-- Battery Power Selection for Complete -->
+                            <div id="completeBatteryPower" class="hide mt-4">
+                                <h5 class="font-semibold mb-3 text-gray-700">Moc magazynu</h5>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" onclick="selectBatteryPower(5)" id="battery-5kw">
+                                        <h6 class="font-semibold">5kWh</h6>
+                                        <p class="text-sm text-gray-500">Standard</p>
+                                    </div>
+                                    <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" onclick="selectBatteryPower(10)" id="battery-10kw">
+                                        <h6 class="font-semibold">10kWh</h6>
+                                        <p class="text-sm text-gray-500">Rozszerzony</p>
+                                    </div>
+                                    <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" onclick="selectBatteryPower(15)" id="battery-15kw">
+                                        <h6 class="font-semibold">15kWh</h6>
+                                        <p class="text-sm text-gray-500">Premium</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inverter Selection -->
+                        <div id="inverterSection" class="hide">
+                            <h4 class="font-semibold mb-3 text-gray-700">Falownik</h4>
+                            <select id="inverterSelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="calculatePrice()">
+                                <option value="">Wybierz falownik...</option>
+                            </select>
+                        </div>
+
+                        <!-- Installation Type -->
+                        <div id="installationSection" class="hide">
+                            <h4 class="font-semibold mb-3 text-gray-700">Miejsce montażu</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer" onclick="selectInstallation('standard')" id="install-standard">
+                                    <i class="fas fa-home text-2xl text-gray-600 mb-2"></i>
+                                    <h5 class="font-semibold">Dach skośny</h5>
+                                    <p class="text-sm text-gray-500">Standard</p>
+                                </div>
+                                <div class="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer" onclick="selectInstallation('flat')" id="install-flat">
+                                    <i class="fas fa-building text-2xl text-gray-600 mb-2"></i>
+                                    <h5 class="font-semibold">Dach płaski</h5>
+                                    <p class="text-sm text-gray-500">Konstrukcja balastowa</p>
+                                </div>
+                                <div class="border-2 border-gray-200 rounded-lg p-4 text-center cursor-pointer" onclick="selectInstallation('ground')" id="install-ground">
+                                    <i class="fas fa-mountain text-2xl text-gray-600 mb-2"></i>
+                                    <h5 class="font-semibold">Grunt</h5>
+                                    <p class="text-sm text-gray-500">Konstrukcja gruntowa</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Options -->
+                    <div class="mt-8 border-t pt-6">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+                            <i class="fas fa-plus-circle mr-2 text-blue-500"></i>
+                            Opcje dodatkowe
+                        </h3>
+                        <button onclick="toggleOptions()" class="text-blue-600 hover:text-blue-800 text-sm">
+                            Pokaż opcje <i class="fas fa-chevron-down ml-1" id="optionsChevron"></i>
+                        </button>
+                        <div id="additionalOptions" class="hide mt-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Marża handlowca (zł)</label>
+                                <input type="number" id="dealerMarkup" value="10000" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl card-shadow p-6 sticky top-4">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Podsumowanie</h3>
+                    <p class="text-gray-600 mb-6 text-sm">Ostateczna oferta dla klienta</p>
+
+                    <div id="summaryContent" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-calculator text-4xl mb-4"></i>
+                        <p>Wybierz produkty aby zobaczyć wycenę</p>
+                    </div>
+
+                    <div id="priceBreakdown" class="hide space-y-3">
+                        <div class="border-b pb-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Cena netto:</span>
+                                <span id="priceNet">0 zł</span>
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="text-gray-600">VAT 8%:</span>
+                                <span id="priceVAT">0 zł</span>
+                            </div>
+                            <div class="flex justify-between font-semibold">
+                                <span>Cena brutto:</span>
+                                <span id="priceGross">0 zł</span>
+                            </div>
+                        </div>
+
+                        <div class="border-b pb-3">
+                            <div class="flex justify-between text-green-600 font-semibold">
+                                <span>Po dotacji "Mój Prąd":</span>
+                                <span id="priceAfterSubsidy">0 zł</span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Dotacja: <span id="subsidyAmount">0 zł</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-blue-600 font-bold text-lg">
+                                <span>Po uldze termomodernizacyjnej:</span>
+                                <span id="finalPrice">0 zł</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tax Relief -->
+                    <div id="taxReliefSection" class="hide mt-6">
+                        <h4 class="font-semibold mb-3 text-gray-700">Ulga termomodernizacyjna</h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center">
+                                <input type="radio" name="taxRelief" value="12" onchange="calculatePrice()" class="mr-2">
+                                <span>12% - skala podatkowa (podstawowa)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="taxRelief" value="32" onchange="calculatePrice()" class="mr-2">
+                                <span>32% - skala podatkowa (wyższa)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="taxRelief" value="19" onchange="calculatePrice()" class="mr-2">
+                                <span>19% - podatek liniowy</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="taxRelief" value="8.5" onchange="calculatePrice()" class="mr-2">
+                                <span>8.5% - ryczałt</span>
+                            </label>
+                            <label class="flex items-center col-span-2">
+                                <input type="radio" name="taxRelief" value="0" onchange="calculatePrice()" class="mr-2" checked>
+                                <span>Brak ulgi</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Credit Simulation -->
+                    <div id="creditSection" class="hide mt-6">
+                        <h4 class="font-semibold mb-3 text-gray-700">Finansowanie kredytem</h4>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Bank</label>
+                            <select id="bankSelect" class="w-full p-2 border border-gray-300 rounded" onchange="calculateCredit()">
+                                <option value="6">Santander (6%)</option>
+                                <option value="7.5">PKO BP (7.5%)</option>
+                                <option value="8.2">mBank (8.2%)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Wkład własny</label>
+                            <div class="flex items-center space-x-4">
+                                <input type="range" id="downPaymentSlider" min="0" max="90" value="0" class="slider flex-1" oninput="updateDownPayment()">
+                                <span id="downPaymentPercent" class="text-sm font-medium w-8">0%</span>
+                            </div>
+                            <input type="number" id="downPaymentAmount" placeholder="lub wpisz kwotę" class="w-full mt-2 p-2 border border-gray-300 rounded text-sm" oninput="updateDownPaymentFromAmount()">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Okres kredytu (lata)</label>
+                            <select id="creditPeriod" class="w-full p-2 border border-gray-300 rounded" onchange="calculateCredit()">
+                                <option value="5">5 lat</option>
+                                <option value="10">10 lat</option>
+                                <option value="15">15 lat</option>
+                                <option value="20">20 lat</option>
+                                <option value="25">25 lat</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kwota kredytu (przed dotacją):</span>
+                                <span id="creditAmount" class="font-semibold">0 zł</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Rata miesięczna (przed dotacją):</span>
+                                <span id="monthlyPayment" class="font-semibold">0 zł</span>
+                            </div>
+                            <div class="flex justify-between border-t pt-2">
+                                <span class="text-gray-600">Rata po dotacji i uldze:</span>
+                                <span id="monthlyPaymentAfter" class="font-semibold text-green-600">0 zł</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Całkowity koszt:</span>
+                                <span id="totalCost" class="font-semibold">0 zł</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 hide">
+        <div class="flex h-full">
+            <div class="admin-sidebar text-white w-64 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Panel Administracyjny</h2>
+                    <button onclick="closeAdmin()" class="text-white hover:text-gray-300">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-gray-300 text-sm mb-6">Zarządzanie produktami i cennikiem</p>
+                
+                <nav class="space-y-2">
+                    <button onclick="showAdminSection('products')" class="w-full text-left px-4 py-3 rounded bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-box mr-3"></i>Produkty
+                    </button>
+                    <button onclick="showAdminSection('banks')" class="w-full text-left px-4 py-3 rounded hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-university mr-3"></i>Banki
+                    </button>
+                    <button onclick="showAdminSection('settings')" class="w-full text-left px-4 py-3 rounded hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-cog mr-3"></i>Ustawienia
+                    </button>
+                </nav>
+            </div>
+
+            <div class="flex-1 bg-white overflow-y-auto">
+                <div class="p-6">
+                    <div id="adminProducts">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Zarządzanie Produktami</h3>
+                            <button onclick="refreshData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                                <i class="fas fa-sync-alt mr-2"></i>Odśwież dane
+                            </button>
+                        </div>
+                        <p class="text-gray-600 mb-6">Edytuj, dodawaj i zmieniaj kolejność produktów</p>
+
+                        <!-- Product Sections -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- PV Panels -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-semibold text-gray-800">Panele PV</h4>
+                                    <button onclick="addProduct('panels')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-plus mr-1"></i>Dodaj Panel PV
+                                    </button>
+                                </div>
+                                <div id="panelsList" class="space-y-3"></div>
+                            </div>
+
+                            <!-- Batteries -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-semibold text-gray-800">Magazyny energii</h4>
+                                    <button onclick="addProduct('batteries')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-plus mr-1"></i>Dodaj Magazyn
+                                    </button>
+                                </div>
+                                <div id="batteriesList" class="space-y-3"></div>
+                            </div>
+
+                            <!-- Inverters -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-semibold text-gray-800">Falowniki</h4>
+                                    <button onclick="addProduct('inverters')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-plus mr-1"></i>Dodaj Falownik
+                                    </button>
+                                </div>
+                                <div id="invertersList" class="space-y-3"></div>
+                            </div>
+
+                            <!-- Completes -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-semibold text-gray-800">Komplety</h4>
+                                    <button onclick="addProduct('completes')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-plus mr-1"></i>Dodaj Komplet
+                                    </button>
+                                </div>
+                                <div id="completesList" class="space-y-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="adminBanks" class="hide">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Zarządzanie Bankami</h3>
+                            <button onclick="addBank()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                                <i class="fas fa-plus mr-2"></i>Dodaj nowy bank
+                            </button>
+                        </div>
+                        <p class="text-gray-600 mb-6">Kredyty i oprocentowanie</p>
+                        <div id="banksList" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div id="adminSettings" class="hide">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Ustawienia</h3>
+                        </div>
+                        <p class="text-gray-600 mb-6">Konfiguracja narzutów i dopłat</p>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Battery Markups -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-4">Narzuty magazynów</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Dopłata 10kWh (zł)</label>
+                                        <input type="number" id="battery10kwMarkup" value="2000" class="w-full p-2 border border-gray-300 rounded" onchange="saveBatteryMarkups()">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Dopłata 15kWh (zł)</label>
+                                        <input type="number" id="battery15kwMarkup" value="4500" class="w-full p-2 border border-gray-300 rounded" onchange="saveBatteryMarkups()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Installation Costs -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-4">Opcje montażu</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Dach płaski (zł/kW)</label>
+                                        <input type="number" id="flatRoofCost" value="200" class="w-full p-2 border border-gray-300 rounded" onchange="saveInstallationCosts()">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Montaż na gruncie (zł/kW)</label>
+                                        <input type="number" id="groundCost" value="600" class="w-full p-2 border border-gray-300 rounded" onchange="saveInstallationCosts()">
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-sm text-gray-600">
+                                    <p><strong>Dach skośny:</strong> Standard (0 zł)</p>
+                                    <p><strong>Dach płaski:</strong> +<span id="flatRoofDisplay">200</span> zł/kW</p>
+                                    <p><strong>Grunt:</strong> +<span id="groundDisplay">600</span> zł/kW</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 hide">
+        <div class="flex items-center justify-center h-full">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold mb-4">Logowanie do panelu</h3>
+                <p class="text-gray-600 mb-4">Wprowadź hasło administratora</p>
+                <input type="password" id="adminPassword" placeholder="Hasło" class="w-full p-3 border border-gray-300 rounded-lg mb-4" onkeypress="if(event.key==='Enter') checkAdminPassword()">
+                <div class="flex space-x-3">
+                    <button onclick="checkAdminPassword()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Zaloguj się</button>
+                    <button onclick="closeAdminLogin()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg">Anuluj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentCategory = '';
+        let selectedProducts = {};
+        let installationType = 'standard';
+        let selectedBatteryPower = 5;
+        let batteryMarkups = {
+            '10': 2000,
+            '15': 4500
+        };
+        
+        let products = {
+            panels: [
+                {id: 1, name: '5kW Canadian Solar', price: 9000, markup: 1500, power: 5},
+                {id: 2, name: '6kW Canadian Solar', price: 10000, markup: 1700, power: 6},
+                {id: 3, name: '7kW Canadian Solar', price: 11000, markup: 1900, power: 7},
+                {id: 4, name: '8kW Canadian Solar', price: 12000, markup: 2100, power: 8},
+                {id: 5, name: '9kW Canadian Solar', price: 13000, markup: 2300, power: 9},
+                {id: 6, name: '10kW Canadian Solar', price: 14000, markup: 2500, power: 10}
+            ],
+            batteries: [
+                {id: 1, name: '5.12kWh Lithtech', price: 11000, markup: 5000},
+                {id: 2, name: '10.24kWh Lithtech', price: 13000, markup: 5000},
+                {id: 3, name: '16.076kWh Lithtech', price: 16000, markup: 5500}
+            ],
+            inverters: [
+                {id: 1, name: '5kW Falownik Deye', price: 2500, markup: 500},
+                {id: 2, name: '10kW Falownik Deye', price: 4000, markup: 800}
+            ],
+            completes: [
+                {id: 1, name: '5kW + 5.12kWh Komplet', price: 32000, markup: 3000, power: 5},
+                {id: 2, name: '8kW + 10.24kWh Komplet', price: 42000, markup: 5000, power: 8},
+                {id: 3, name: '10kW + 16.076kWh Komplet', price: 46000, markup: 6000, power: 10}
+            ]
+        };
+
+        let banks = [
+            {name: 'Santander', rate: 6.0},
+            {name: 'PKO BP', rate: 7.5},
+            {name: 'mBank', rate: 8.2}
+        ];
+
+        let installationCosts = {
+            flat: 200,
+            ground: 600
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            const savedProducts = localStorage.getItem('products');
+            const savedBanks = localStorage.getItem('banks');
+            const savedInstallationCosts = localStorage.getItem('installationCosts');
+            const savedBatteryMarkups = localStorage.getItem('batteryMarkups');
+            
+            if (savedProducts) {
+                products = JSON.parse(savedProducts);
+            }
+            if (savedBanks) {
+                banks = JSON.parse(savedBanks);
+            }
+            if (savedInstallationCosts) {
+                installationCosts = JSON.parse(savedInstallationCosts);
+            }
+            if (savedBatteryMarkups) {
+                batteryMarkups = JSON.parse(savedBatteryMarkups);
+            }
+            
+            updateProductLists();
+            updateBanksList();
+            updateSettingsDisplay();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('products', JSON.stringify(products));
+            localStorage.setItem('banks', JSON.stringify(banks));
+            localStorage.setItem('installationCosts', JSON.stringify(installationCosts));
+            localStorage.setItem('batteryMarkups', JSON.stringify(batteryMarkups));
+        }
+
+        // Category selection
+        function selectCategory(category) {
+            currentCategory = category;
+            
+            // Update category cards
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Show/hide sections
+            document.querySelectorAll('#productSelection > div').forEach(section => {
+                section.classList.add('hide');
+            });
+
+            const categoryMap = {
+                'pv': 'pvSection',
+                'battery': 'batterySection',
+                'complete': 'completeSection'
+            };
+
+            if (categoryMap[category]) {
+                document.getElementById(categoryMap[category]).classList.remove('hide');
+                
+                // Show inverter section for all categories
+                document.getElementById('inverterSection').classList.remove('hide');
+                
+                // Show installation section only for PV and complete
+                if (category === 'pv' || category === 'complete') {
+                    document.getElementById('installationSection').classList.remove('hide');
+                }
+                
+                // Highlight active category
+                event.currentTarget.classList.add('active');
+            }
+
+            updateProductLists();
+            calculatePrice();
+        }
+
+        // Battery power selection for complete
+        function selectBatteryPower(power) {
+            selectedBatteryPower = power;
+            
+            document.querySelectorAll('[id^="battery-"]').forEach(card => {
+                card.classList.remove('border-blue-500', 'bg-blue-50');
+                card.classList.add('border-gray-200');
+            });
+            
+            document.getElementById(`battery-${power}kw`).classList.remove('border-gray-200');
+            document.getElementById(`battery-${power}kw`).classList.add('border-blue-500', 'bg-blue-50');
+            
+            calculatePrice();
+        }
+
+        // Update product lists
+        function updateProductLists() {
+            // Update PV select
+            const pvSelect = document.getElementById('pvSelect');
+            pvSelect.innerHTML = '<option value="">Wybierz moc instalacji...</option>';
+            products.panels.forEach(panel => {
+                const option = document.createElement('option');
+                option.value = panel.id;
+                option.textContent = panel.name;
+                pvSelect.appendChild(option);
+            });
+
+            // Update battery select
+            const batterySelect = document.getElementById('batterySelect');
+            batterySelect.innerHTML = '<option value="">Wybierz pojemność magazynu...</option>';
+            products.batteries.forEach(battery => {
+                const option = document.createElement('option');
+                option.value = battery.id;
+                option.textContent = battery.name;
+                batterySelect.appendChild(option);
+            });
+
+            // Update complete select
+            const completeSelect = document.getElementById('completeSelect');
+            completeSelect.innerHTML = '<option value="">Wybierz komplet...</option>';
+            products.completes.forEach(complete => {
+                const option = document.createElement('option');
+                option.value = complete.id;
+                option.textContent = complete.name;
+                completeSelect.appendChild(option);
+            });
+
+            // Show/hide battery power selection for complete
+            completeSelect.addEventListener('change', function() {
+                const completeBatteryPower = document.getElementById('completeBatteryPower');
+                if (this.value) {
+                    completeBatteryPower.classList.remove('hide');
+                } else {
+                    completeBatteryPower.classList.add('hide');
+                }
+            });
+
+            // Update inverter select
+            const inverterSelect = document.getElementById('inverterSelect');
+            inverterSelect.innerHTML = '<option value="">Wybierz falownik...</option>';
+            products.inverters.forEach(inverter => {
+                const option = document.createElement('option');
+                option.value = inverter.id;
+                option.textContent = inverter.name;
+                inverterSelect.appendChild(option);
+            });
+
+            // Update bank select
+            const bankSelect = document.getElementById('bankSelect');
+            bankSelect.innerHTML = '';
+            banks.forEach(bank => {
+                const option = document.createElement('option');
+                option.value = bank.rate;
+                option.textContent = `${bank.name} (${bank.rate}%)`;
+                bankSelect.appendChild(option);
+            });
+        }
+
+        // Installation type selection
+        function selectInstallation(type) {
+            installationType = type;
+            
+            document.querySelectorAll('[id^="install-"]').forEach(card => {
+                card.classList.remove('border-blue-500', 'bg-blue-50');
+                card.classList.add('border-gray-200');
+            });
+            
+            document.getElementById(`install-${type}`).classList.remove('border-gray-200');
+            document.getElementById(`install-${type}`).classList.add('border-blue-500', 'bg-blue-50');
+            
+            calculatePrice();
+        }
+
+        // Toggle additional options
+        function toggleOptions() {
+            const options = document.getElementById('additionalOptions');
+            const chevron = document.getElementById('optionsChevron');
+            
+            if (options.classList.contains('hide')) {
+                options.classList.remove('hide');
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            } else {
+                options.classList.add('hide');
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+
+        // Calculate price
+        function calculatePrice() {
+            let totalPrice = 0;
+            let selectedPower = 0;
+            let productName = '';
+
+            // Get selected products
+            if (currentCategory === 'pv') {
+                const pvId = document.getElementById('pvSelect').value;
+                const inverterId = document.getElementById('inverterSelect').value;
+                
+                if (pvId) {
+                    const panel = products.panels.find(p => p.id == pvId);
+                    totalPrice += panel.price + panel.markup;
+                    selectedPower = panel.power;
+                    productName = panel.name;
+                }
+                
+                if (inverterId) {
+                    const inverter = products.inverters.find(i => i.id == inverterId);
+                    totalPrice += inverter.price + inverter.markup;
+                    productName += ` + ${inverter.name}`;
+                }
+            } else if (currentCategory === 'battery') {
+                const batteryId = document.getElementById('batterySelect').value;
+                const inverterId = document.getElementById('inverterSelect').value;
+                
+                if (batteryId) {
+                    const battery = products.batteries.find(b => b.id == batteryId);
+                    totalPrice += battery.price + battery.markup;
+                    productName = battery.name;
+                }
+                
+                if (inverterId) {
+                    const inverter = products.inverters.find(i => i.id == inverterId);
+                    totalPrice += inverter.price + inverter.markup;
+                    productName += ` + ${inverter.name}`;
+                }
+            } else if (currentCategory === 'complete') {
+                const completeId = document.getElementById('completeSelect').value;
+                const inverterId = document.getElementById('inverterSelect').value;
+                
+                if (completeId) {
+                    const complete = products.completes.find(c => c.id == completeId);
+                    totalPrice += complete.price + complete.markup;
+                    selectedPower = complete.power;
+                    productName = complete.name;
+                    
+                    // Add battery power markup
+                    if (selectedBatteryPower === 10) {
+                        totalPrice += batteryMarkups['10'];
+                    } else if (selectedBatteryPower === 15) {
+                        totalPrice += batteryMarkups['15'];
+                    }
+                }
+                
+                if (inverterId) {
+                    const inverter = products.inverters.find(i => i.id == inverterId);
+                    totalPrice += inverter.price + inverter.markup;
+                    productName += ` + ${inverter.name}`;
+                }
+            }
+
+            // Add installation costs
+            if (selectedPower > 0) {
+                if (installationType === 'flat') {
+                    totalPrice += selectedPower * installationCosts.flat;
+                } else if (installationType === 'ground') {
+                    totalPrice += selectedPower * installationCosts.ground;
+                }
+            }
+
+            // Add dealer markup
+            const dealerMarkup = parseFloat(document.getElementById('dealerMarkup').value) || 0;
+            totalPrice += dealerMarkup;
+
+            if (totalPrice > 0) {
+                updateSummary(totalPrice, productName);
+            } else {
+                document.getElementById('priceBreakdown').classList.add('hide');
+                document.getElementById('taxReliefSection').classList.add('hide');
+                document.getElementById('creditSection').classList.add('hide');
+                document.getElementById('summaryContent').classList.remove('hide');
+            }
+        }
+
+        // Update summary
+        function updateSummary(netPrice, productName) {
+            const vatRate = 0.08;
+            const vat = netPrice * vatRate;
+            const grossPrice = netPrice + vat;
+
+            // Calculate subsidy
+            let subsidy = 0;
+            if (currentCategory === 'battery') {
+                subsidy = Math.min(grossPrice * 0.5, 16000);
+            } else if (currentCategory === 'complete') {
+                subsidy = Math.min(grossPrice * 0.5, 23000);
+            }
+
+            const priceAfterSubsidy = grossPrice - subsidy;
+
+            // Calculate tax relief
+            const taxReliefRate = parseFloat(document.querySelector('input[name="taxRelief"]:checked')?.value) || 0;
+            const taxRelief = priceAfterSubsidy * (taxReliefRate / 100);
+            const finalPrice = priceAfterSubsidy - taxRelief;
+
+            // Update display
+            document.getElementById('priceNet').textContent = `${netPrice.toLocaleString()} zł`;
+            document.getElementById('priceVAT').textContent = `${Math.round(vat).toLocaleString()} zł`;
+            document.getElementById('priceGross').textContent = `${Math.round(grossPrice).toLocaleString()} zł`;
+            document.getElementById('priceAfterSubsidy').textContent = `${Math.round(priceAfterSubsidy).toLocaleString()} zł`;
+            document.getElementById('subsidyAmount').textContent = `${Math.round(subsidy).toLocaleString()} zł`;
+            document.getElementById('finalPrice').textContent = `${Math.round(finalPrice).toLocaleString()} zł`;
+
+            document.getElementById('summaryContent').classList.add('hide');
+            document.getElementById('priceBreakdown').classList.remove('hide');
+            document.getElementById('taxReliefSection').classList.remove('hide');
+            document.getElementById('creditSection').classList.remove('hide');
+
+            calculateCredit();
+        }
+
+        // Down payment slider
+        function updateDownPayment() {
+            const slider = document.getElementById('downPaymentSlider');
+            const percent = document.getElementById('downPaymentPercent');
+            const amount = document.getElementById('downPaymentAmount');
+            
+            percent.textContent = slider.value + '%';
+            
+            const grossPrice = parseFloat(document.getElementById('priceGross').textContent.replace(/[^\d]/g, '')) || 0;
+            const downPaymentAmount = grossPrice * (slider.value / 100);
+            amount.value = Math.round(downPaymentAmount);
+            
+            calculateCredit();
+        }
+
+        function updateDownPaymentFromAmount() {
+            const amount = document.getElementById('downPaymentAmount');
+            const slider = document.getElementById('downPaymentSlider');
+            const percent = document.getElementById('downPaymentPercent');
+            
+            const grossPrice = parseFloat(document.getElementById('priceGross').textContent.replace(/[^\d]/g, '')) || 0;
+            const percentage = Math.min(90, (amount.value / grossPrice) * 100);
+            
+            slider.value = percentage;
+            percent.textContent = Math.round(percentage) + '%';
+            
+            calculateCredit();
+        }
+
+        // Calculate credit - CORRECTED VERSION
+        function calculateCredit() {
+            const grossPrice = parseFloat(document.getElementById('priceGross').textContent.replace(/[^\d]/g, '')) || 0;
+            const downPaymentAmount = parseFloat(document.getElementById('downPaymentAmount').value) || 0;
+            const creditAmount = grossPrice - downPaymentAmount;
+            const interestRate = parseFloat(document.getElementById('bankSelect').value) / 100 / 12;
+            const months = parseFloat(document.getElementById('creditPeriod').value) * 12;
+
+            if (creditAmount > 0 && months > 0 && interestRate > 0) {
+                // Calculate monthly payment before subsidy (from gross price)
+                const monthlyPayment = creditAmount * (interestRate * Math.pow(1 + interestRate, months)) / (Math.pow(1 + interestRate, months) - 1);
+                const totalCost = monthlyPayment * months;
+
+                // Calculate credit amount after subsidies and tax relief
+                const finalPrice = parseFloat(document.getElementById('finalPrice').textContent.replace(/[^\d]/g, '')) || 0;
+                const creditAmountAfter = Math.max(0, finalPrice - downPaymentAmount);
+                
+                let monthlyPaymentAfter = 0;
+                if (creditAmountAfter > 0 && months > 0 && interestRate > 0) {
+                    // FIXED: Calculate monthly payment for the reduced loan amount
+                    monthlyPaymentAfter = creditAmountAfter * (interestRate * Math.pow(1 + interestRate, months)) / (Math.pow(1 + interestRate, months) - 1);
+                }
+
+                document.getElementById('creditAmount').textContent = `${Math.round(creditAmount).toLocaleString()} zł`;
+                document.getElementById('monthlyPayment').textContent = `${Math.round(monthlyPayment).toLocaleString()} zł`;
+                document.getElementById('monthlyPaymentAfter').textContent = `${Math.round(monthlyPaymentAfter).toLocaleString()} zł`;
+                document.getElementById('totalCost').textContent = `${Math.round(totalCost).toLocaleString()} zł`;
+            } else {
+                document.getElementById('creditAmount').textContent = '0 zł';
+                document.getElementById('monthlyPayment').textContent = '0 zł';
+                document.getElementById('monthlyPaymentAfter').textContent = '0 zł';
+                document.getElementById('totalCost').textContent = '0 zł';
+            }
+        }
+
+        // Battery markups functions
+        function saveBatteryMarkups() {
+            batteryMarkups['10'] = parseFloat(document.getElementById('battery10kwMarkup').value) || 2000;
+            batteryMarkups['15'] = parseFloat(document.getElementById('battery15kwMarkup').value) || 4500;
+            saveData();
+            calculatePrice();
+        }
+
+        // Installation costs functions
+        function saveInstallationCosts() {
+            installationCosts.flat = parseFloat(document.getElementById('flatRoofCost').value) || 200;
+            installationCosts.ground = parseFloat(document.getElementById('groundCost').value) || 600;
+            
+            document.getElementById('flatRoofDisplay').textContent = installationCosts.flat;
+            document.getElementById('groundDisplay').textContent = installationCosts.ground;
+            
+            saveData();
+            calculatePrice();
+        }
+
+        function updateSettingsDisplay() {
+            document.getElementById('battery10kwMarkup').value = batteryMarkups['10'];
+            document.getElementById('battery15kwMarkup').value = batteryMarkups['15'];
+            document.getElementById('flatRoofCost').value = installationCosts.flat;
+            document.getElementById('groundCost').value = installationCosts.ground;
+            document.getElementById('flatRoofDisplay').textContent = installationCosts.flat;
+            document.getElementById('groundDisplay').textContent = installationCosts.ground;
+        }
+
+        // Admin functions
+        function showAdminLogin() {
+            document.getElementById('adminLoginModal').classList.remove('hide');
+        }
+
+        function closeAdminLogin() {
+            document.getElementById('adminLoginModal').classList.add('hide');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'instal2025') {
+                closeAdminLogin();
+                showAdmin();
+            } else {
+                alert('Nieprawidłowe hasło!');
+            }
+        }
+
+        function showAdmin() {
+            document.getElementById('adminPanel').classList.remove('hide');
+            updateAdminLists();
+        }
+
+        function closeAdmin() {
+            document.getElementById('adminPanel').classList.add('hide');
+        }
+
+        function showAdminSection(section) {
+            document.querySelectorAll('#adminPanel nav button').forEach(btn => {
+                btn.classList.remove('bg-blue-600');
+                btn.classList.add('hover:bg-gray-700');
+            });
+            
+            event.currentTarget.classList.add('bg-blue-600');
+            event.currentTarget.classList.remove('hover:bg-gray-700');
+
+            document.getElementById('adminProducts').classList.toggle('hide', section !== 'products');
+            document.getElementById('adminBanks').classList.toggle('hide', section !== 'banks');
+            document.getElementById('adminSettings').classList.toggle('hide', section !== 'settings');
+        }
+
+        function updateAdminLists() {
+            updateProductAdminList('panels', 'panelsList');
+            updateProductAdminList('batteries', 'batteriesList');
+            updateProductAdminList('inverters', 'invertersList');
+            updateProductAdminList('completes', 'completesList');
+            updateBanksAdminList();
+            updateSettingsDisplay();
+        }
+
+        function updateProductAdminList(type, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            products[type].forEach((product, index) => {
+                const div = document.createElement('div');
+                div.className = 'product-item bg-white border rounded-lg p-4';
+                div.draggable = true;
+                div.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h5 class="font-semibold text-gray-800" contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'name', this.textContent)">${product.name}</h5>
+                            <div class="text-sm text-gray-600 mt-1">
+                                <span>Cena: </span><span contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'price', this.textContent)">${product.price}</span> zł | 
+                                <span>Narzut: </span><span contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'markup', this.textContent)">${product.markup}</span> zł
+                            </div>
+                        </div>
+                        <button onclick="deleteProduct('${type}', ${product.id})" class="text-red-500 hover:text-red-700 ml-4">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // Drag and drop functionality
+                div.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', index);
+                    div.classList.add('dragging');
+                });
+                
+                div.addEventListener('dragend', () => {
+                    div.classList.remove('dragging');
+                });
+                
+                container.appendChild(div);
+            });
+
+            // Add drop zone functionality
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                const toIndex = Array.from(container.children).indexOf(e.target.closest('.product-item'));
+                
+                if (fromIndex !== toIndex && toIndex !== -1) {
+                    const item = products[type].splice(fromIndex, 1)[0];
+                    products[type].splice(toIndex, 0, item);
+                    saveData();
+                    updateProductAdminList(type, containerId);
+                }
+            });
+        }
+
+        function updateBanksAdminList() {
+            const container = document.getElementById('banksList');
+            container.innerHTML = '';
+
+            banks.forEach((bank, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white border rounded-lg p-4';
+                div.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h5 class="font-semibold text-gray-800" contenteditable="true" onblur="updateBank(${index}, 'name', this.textContent)">${bank.name}</h5>
+                            <div class="text-sm text-gray-600 mt-1">
+                                Oprocentowanie: <span contenteditable="true" onblur="updateBank(${index}, 'rate', this.textContent)">${bank.rate}</span>%
+                            </div>
+                        </div>
+                        <button onclick="deleteBank(${index})" class="text-red-500 hover:text-red-700 ml-4">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addProduct(type) {
+            const name = prompt(`Nazwa ${type === 'panels' ? 'panelu' : type === 'batteries' ? 'magazynu' : type === 'inverters' ? 'falownika' : 'kompletu'}:`);
+            const price = parseFloat(prompt('Cena netto:')) || 0;
+            const markup = parseFloat(prompt('Narzut (opcjonalnie):')) || 0;
+            
+            if (name && price) {
+                const newId = Math.max(...products[type].map(p => p.id), 0) + 1;
+                const newProduct = {id: newId, name, price, markup};
+                
+                if (type === 'panels' || type === 'completes') {
+                    const power = parseFloat(prompt('Moc (kW):')) || 0;
+                    newProduct.power = power;
+                }
+                
+                products[type].push(newProduct);
+                saveData();
+                updateAdminLists();
+                updateProductLists();
+            }
+        }
+
+        function updateProduct(type, id, field, value) {
+            const product = products[type].find(p => p.id === id);
+            if (product) {
+                if (field === 'price' || field === 'markup' || field === 'power') {
+                    product[field] = parseFloat(value) || 0;
+                } else {
+                    product[field] = value;
+                }
+                saveData();
+                updateProductLists();
+                calculatePrice();
+            }
+        }
+
+        function deleteProduct(type, id) {
+            if (confirm('Czy na pewno chcesz usunąć ten produkt?')) {
+                products[type] = products[type].filter(p => p.id !== id);
+                saveData();
+                updateAdminLists();
+                updateProductLists();
+                calculatePrice();
+            }
+        }
+
+        function addBank() {
+            const name = prompt('Nazwa banku:');
+            const rate = parseFloat(prompt('Oprocentowanie (%):')) || 0;
+            
+            if (name && rate) {
+                banks.push({name, rate});
+                saveData();
+                updateBanksAdminList();
+                updateProductLists();
+            }
+        }
+
+        function updateBank(index, field, value) {
+            if (field === 'rate') {
+                banks[index][field] = parseFloat(value) || 0;
+            } else {
+                banks[index][field] = value;
+            }
+            saveData();
+            updateProductLists();
+        }
+
+        function deleteBank(index) {
+            if (confirm('Czy na pewno chcesz usunąć ten bank?')) {
+                banks.splice(index, 1);
+                saveData();
+                updateBanksAdminList();
+                updateProductLists();
+            }
+        }
+
+        function refreshData() {
+            updateAdminLists();
+            updateProductLists();
+            alert('Dane zostały odświeżone!');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateProductLists();
+        });
+    </script>
+</body>
+</html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDlHKyKAu%2FWDUynqKHlv64Tjt%2FP%2BlVyVjTCrf8uLDPisnw0K9o4XJ9Q%2BpraaVLF3F7HDtCpjtkdtS8Tov%2FmAVHxTfPWmZGiDZOk%2B8joPm3B8Tha2cPYkhRSUM7LfpdZnCVn6WmAH51MkUX6uoJsz25iwlwwyZb1B5T32EoF5l7hL7GVEz7xB6ez0JcQl2xLNEwxPy94760t88gIR1EyGeAhzmeV5Xd%2FOIHpO86OpHaWjEWKlKdN2qkmlcxYrQ7V3fU8IY00OwuhAgKwx9M%2FCM3ww6zIQrDZYqHfr21fC2X2jog1E0qPkqDnUoQ673VKKEhzI3cUNh6PqAO1GAANk8PFODhVZgKe1aOWbd1MnJZgsXopEImDtBaG5RMmJbgC%2BwnQXW2IXqY5tFV6hBnJGj2YHd%2FF4yBFPhdX%2BNaJjFaGj62tEtbw4aPCMbNiBYDOy1qRvW2FXbPOFLdd9dvLUJy8byjsVW1FcERVOiD9Y%2FpVbgEp60bHs8kKQhiEPlhC1CjmJ%2Fc4PR9aCo4yebyZ0ZDY8%3D";
+        window.__genspark_locale = "en-US";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDlHKyKAu/WDUynqKHlv64Tjt/P+lVyVjTCrf8uLDPisnw0K9o4XJ9Q+praaVLF3F7HDtCpjtkdtS8Tov/mAVHxTfPWmZGiDZOk+8joPm3B8Tha2cPYkhRSUM7LfpdZnCVn6WmAH51MkUX6uoJsz25iwlwwyZb1B5T32EoF5l7hL7GVEz7xB6ez0JcQl2xLNEwxPy94760t88gIR1EyGeAhzmeV5Xd/OIHpO86OpHaWjEWKlKdN2qkmlcxYrQ7V3fU8IY00OwuhAgKwx9M/CM3ww6zIQrDZYqHfr21fC2X2jog1E0qPkqDnUoQ673VKKEhzI3cUNh6PqAO1GAANk8PFODhVZgKe1aOWbd1MnJZgsXopEImDtBaG5RMmJbgC+wnQXW2IXqY5tFV6hBnJGj2YHd/F4yBFPhdX+NaJjFaGj62tEtbw4aPCMbNiBYDOy1qRvW2FXbPOFLdd9dvLUJy8byjsVW1FcERVOiD9Y/pVbgEp60bHs8kKQhiEPlhC1CjmJ/c4PR9aCo4yebyZ0ZDY8=";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
