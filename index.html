@@ -11,9 +11,6 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
-    
-
     
     <style>
         .gradient-bg {
@@ -85,15 +82,9 @@
                     <h1 class="text-3xl font-bold">Kalkulator PRO INSTAL</h1>
                     <p class="text-blue-100 mt-1">Profesjonalne wyceny instalacji OZE</p>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div id="syncStatus" class="flex items-center text-sm">
-                        <i class="fas fa-circle text-green-400 mr-2"></i>
-                        <span>Synchronizacja aktywna</span>
-                    </div>
-                    <button onclick="showAdminLogin()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
-                        <i class="fas fa-cog mr-2"></i>Panel Admin
-                    </button>
-                </div>
+                <button onclick="showAdminLogin()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
+                    <i class="fas fa-cog mr-2"></i>Panel Admin
+                </button>
             </div>
         </div>
     </header>
@@ -105,18 +96,6 @@
                 <div class="bg-white rounded-xl card-shadow p-6">
                     <h2 class="text-2xl font-bold mb-6 text-gray-800">Kalkulator Instalacji</h2>
                     <p class="text-gray-600 mb-6">Wybierz odpowiednie produkty dla Twojego klienta</p>
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-sync-alt text-blue-400"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-blue-700">
-                                    <strong>Dane synchronizowane w czasie rzeczywistym!</strong> Wszystkie zmiany w panelu administracyjnym są automatycznie widoczne dla wszystkich użytkowników.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Category Selection -->
                     <div class="mb-6">
@@ -524,36 +503,6 @@
     </div>
 
     <script>
-        // Simple encryption/decryption for Firebase keys
-        function decodeConfig(encoded) {
-            const key = 'oze-kalk-2025';
-            let decoded = '';
-            for (let i = 0; i < encoded.length; i++) {
-                decoded += String.fromCharCode(encoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-            }
-            return decoded;
-        }
-
-        // Encoded Firebase configuration
-        const encodedConfig = 'HXx9fjzpe5ZRzCuGen9ivXrsZ2E697yXMFE|jdmsystems-a3bc4.firebaseapp.com|jdmsystems-a3bc4|jdmsystems-a3bc4.firebasestorage.app|212965364723|1:212965364723:web:acbf246c2d9df8ca8d7886|G-6HYB12HJGW';
-        
-        // Decode and parse configuration
-        const configParts = decodeConfig(encodedConfig).split('|');
-        const firebaseConfig = {
-            apiKey: configParts[0],
-            authDomain: configParts[1],
-            projectId: configParts[2],
-            storageBucket: configParts[3],
-            messagingSenderId: configParts[4],
-            appId: configParts[5],
-            measurementId: configParts[6]
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const analytics = firebase.analytics();
-
         // Global variables
         let currentCategory = '';
         let selectedProducts = {};
@@ -600,87 +549,88 @@
             ground: 600
         };
 
-        // Load data from Firebase
-        async function loadData() {
-            try {
-                const productsDoc = await db.collection('data').doc('products').get();
-                const banksDoc = await db.collection('data').doc('banks').get();
-                const settingsDoc = await db.collection('data').doc('settings').get();
-                
-                if (productsDoc.exists) {
-                    products = productsDoc.data();
-                }
-                if (banksDoc.exists) {
-                    banks = banksDoc.data().banks;
-                }
-                if (settingsDoc.exists) {
-                    const settings = settingsDoc.data();
-                    installationCosts = settings.installationCosts;
-                    batteryMarkups = settings.batteryMarkups;
-                }
-                
-                updateProductLists();
-                updateBanksList();
-                updateSettingsDisplay();
-            } catch (error) {
-                console.error('Błąd podczas ładowania danych:', error);
-                // Fallback to localStorage
-                loadFromLocalStorage();
-            }
+                 // Firebase configuration
+         const firebaseConfig = {
+             apiKey: "AIzaSyB9fjzpe5ZRzCuGen9ivXrsZ2E697yXMFE",
+             authDomain: "jdmsystems-a3bc4.firebaseapp.com",
+             projectId: "jdmsystems-a3bc4",
+             storageBucket: "jdmsystems-a3bc4.firebasestorage.app",
+             messagingSenderId: "212965364723",
+             appId: "1:212965364723:web:acbf246c2d9df8ca8d7886"
+         };
+
+        // Initialize Firebase
+        let app;
+        let db;
+        if (!firebase.apps.length) {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } else {
+            app = firebase.app();
+            db = firebase.firestore();
         }
 
-        // Save data to Firebase
-        async function saveData() {
-            try {
-                await db.collection('data').doc('products').set(products);
-                await db.collection('data').doc('banks').set({banks: banks});
-                await db.collection('data').doc('settings').set({
-                    installationCosts: installationCosts,
-                    batteryMarkups: batteryMarkups
-                });
-            } catch (error) {
-                console.error('Błąd podczas zapisywania danych:', error);
-                // Fallback to localStorage
-                saveToLocalStorage();
-            }
-        }
+                 // Load data from Firebase
+         async function loadData() {
+             try {
+                 const productsDoc = await db.collection('data').doc('products').get();
+                 if (productsDoc.exists) {
+                     const data = productsDoc.data();
+                     if (data.panels) products.panels = data.panels;
+                     if (data.batteries) products.batteries = data.batteries;
+                     if (data.inverters) products.inverters = data.inverters;
+                     if (data.completes) products.completes = data.completes;
+                 }
 
-        // Fallback functions
-        function loadFromLocalStorage() {
-            const savedProducts = localStorage.getItem('products');
-            const savedBanks = localStorage.getItem('banks');
-            const savedInstallationCosts = localStorage.getItem('installationCosts');
-            const savedBatteryMarkups = localStorage.getItem('batteryMarkups');
-            
-            if (savedProducts) {
-                products = JSON.parse(savedProducts);
-            }
-            if (savedBanks) {
-                banks = JSON.parse(savedBanks);
-            }
-            if (savedInstallationCosts) {
-                installationCosts = JSON.parse(savedInstallationCosts);
-            }
-            if (savedBatteryMarkups) {
-                batteryMarkups = JSON.parse(savedBatteryMarkups);
-            }
-        }
+                 const banksDoc = await db.collection('data').doc('banks').get();
+                 if (banksDoc.exists) {
+                     const data = banksDoc.data();
+                     if (data.banks) banks = data.banks;
+                 }
 
-        function saveToLocalStorage() {
-            localStorage.setItem('products', JSON.stringify(products));
-            localStorage.setItem('banks', JSON.stringify(banks));
-            localStorage.setItem('installationCosts', JSON.stringify(installationCosts));
-            localStorage.setItem('batteryMarkups', JSON.stringify(batteryMarkups));
-        }
+                 const settingsDoc = await db.collection('data').doc('settings').get();
+                 if (settingsDoc.exists) {
+                     const data = settingsDoc.data();
+                     if (data.installationCosts) installationCosts = data.installationCosts;
+                     if (data.batteryMarkups) batteryMarkups = data.batteryMarkups;
+                 }
+                 
+                 updateProductLists();
+                 updateBanksList();
+                 updateSettingsDisplay();
+             } catch (error) {
+                 console.error("Error loading data from Firebase:", error);
+             }
+         }
+
+                 // Save data to Firebase
+         async function saveData() {
+             try {
+                 await db.collection('data').doc('products').set({
+                     panels: products.panels,
+                     batteries: products.batteries,
+                     inverters: products.inverters,
+                     completes: products.completes
+                 });
+
+                 await db.collection('data').doc('banks').set({
+                     banks: banks
+                 });
+
+                 await db.collection('data').doc('settings').set({
+                     installationCosts: installationCosts,
+                     batteryMarkups: batteryMarkups
+                 });
+                 
+                 console.log("Data saved to Firebase successfully!");
+             } catch (error) {
+                 console.error("Error saving data to Firebase:", error);
+             }
+         }
 
         // Category selection
         function selectCategory(category) {
             currentCategory = category;
-            
-            // Track category selection
-            analytics.logEvent('select_category', {
-                category: category
-            });
             
             // Update category cards
             document.querySelectorAll('.category-card').forEach(card => {
@@ -732,68 +682,82 @@
             calculatePrice();
         }
 
-        // Update product lists
-        function updateProductLists() {
-            // Update PV select
-            const pvSelect = document.getElementById('pvSelect');
-            pvSelect.innerHTML = '<option value="">Wybierz moc instalacji...</option>';
-            products.panels.forEach(panel => {
-                const option = document.createElement('option');
-                option.value = panel.id;
-                option.textContent = panel.name;
-                pvSelect.appendChild(option);
-            });
+                 // Update product lists
+         function updateProductLists() {
+             // Update PV select
+             const pvSelect = document.getElementById('pvSelect');
+             pvSelect.innerHTML = '<option value="">Wybierz moc instalacji...</option>';
+             products.panels.forEach(panel => {
+                 const option = document.createElement('option');
+                 option.value = panel.id;
+                 option.textContent = panel.name;
+                 pvSelect.appendChild(option);
+             });
 
-            // Update battery select
-            const batterySelect = document.getElementById('batterySelect');
-            batterySelect.innerHTML = '<option value="">Wybierz pojemność magazynu...</option>';
-            products.batteries.forEach(battery => {
-                const option = document.createElement('option');
-                option.value = battery.id;
-                option.textContent = battery.name;
-                batterySelect.appendChild(option);
-            });
+             // Update battery select
+             const batterySelect = document.getElementById('batterySelect');
+             batterySelect.innerHTML = '<option value="">Wybierz pojemność magazynu...</option>';
+             products.batteries.forEach(battery => {
+                 const option = document.createElement('option');
+                 option.value = battery.id;
+                 option.textContent = battery.name;
+                 batterySelect.appendChild(option);
+             });
 
-            // Update complete select
-            const completeSelect = document.getElementById('completeSelect');
-            completeSelect.innerHTML = '<option value="">Wybierz komplet...</option>';
-            products.completes.forEach(complete => {
-                const option = document.createElement('option');
-                option.value = complete.id;
-                option.textContent = complete.name;
-                completeSelect.appendChild(option);
-            });
+             // Update complete select
+             const completeSelect = document.getElementById('completeSelect');
+             completeSelect.innerHTML = '<option value="">Wybierz komplet...</option>';
+             products.completes.forEach(complete => {
+                 const option = document.createElement('option');
+                 option.value = complete.id;
+                 option.textContent = complete.name;
+                 completeSelect.appendChild(option);
+             });
 
-            // Show/hide battery power selection for complete
-            completeSelect.addEventListener('change', function() {
-                const completeBatteryPower = document.getElementById('completeBatteryPower');
-                if (this.value) {
-                    completeBatteryPower.classList.remove('hide');
-                } else {
-                    completeBatteryPower.classList.add('hide');
-                }
-            });
+             // Show/hide battery power selection for complete
+             completeSelect.addEventListener('change', function() {
+                 const completeBatteryPower = document.getElementById('completeBatteryPower');
+                 if (this.value) {
+                     completeBatteryPower.classList.remove('hide');
+                 } else {
+                     completeBatteryPower.classList.add('hide');
+                 }
+             });
 
-            // Update inverter select
-            const inverterSelect = document.getElementById('inverterSelect');
-            inverterSelect.innerHTML = '<option value="">Wybierz falownik...</option>';
-            products.inverters.forEach(inverter => {
-                const option = document.createElement('option');
-                option.value = inverter.id;
-                option.textContent = inverter.name;
-                inverterSelect.appendChild(option);
-            });
+             // Update inverter select
+             const inverterSelect = document.getElementById('inverterSelect');
+             inverterSelect.innerHTML = '<option value="">Wybierz falownik...</option>';
+             products.inverters.forEach(inverter => {
+                 const option = document.createElement('option');
+                 option.value = inverter.id;
+                 option.textContent = inverter.name;
+                 inverterSelect.appendChild(option);
+             });
 
-            // Update bank select
-            const bankSelect = document.getElementById('bankSelect');
-            bankSelect.innerHTML = '';
-            banks.forEach(bank => {
-                const option = document.createElement('option');
-                option.value = bank.rate;
-                option.textContent = `${bank.name} (${bank.rate}%)`;
-                bankSelect.appendChild(option);
-            });
-        }
+             // Update bank select
+             const bankSelect = document.getElementById('bankSelect');
+             bankSelect.innerHTML = '';
+             banks.forEach(bank => {
+                 const option = document.createElement('option');
+                 option.value = bank.rate;
+                 option.textContent = `${bank.name} (${bank.rate}%)`;
+                 bankSelect.appendChild(option);
+             });
+         }
+
+         // Update banks list
+         function updateBanksList() {
+             const bankSelect = document.getElementById('bankSelect');
+             if (bankSelect) {
+                 bankSelect.innerHTML = '';
+                 banks.forEach(bank => {
+                     const option = document.createElement('option');
+                     option.value = bank.rate;
+                     option.textContent = `${bank.name} (${bank.rate}%)`;
+                     bankSelect.appendChild(option);
+                 });
+             }
+         }
 
         // Installation type selection
         function selectInstallation(type) {
@@ -1014,24 +978,24 @@
         }
 
         // Battery markups functions
-        function saveBatteryMarkups() {
-            batteryMarkups['10'] = parseFloat(document.getElementById('battery10kwMarkup').value) || 2000;
-            batteryMarkups['15'] = parseFloat(document.getElementById('battery15kwMarkup').value) || 4500;
-            saveData();
-            calculatePrice();
-        }
+                 async function saveBatteryMarkups() {
+             batteryMarkups['10'] = parseFloat(document.getElementById('battery10kwMarkup').value) || 2000;
+             batteryMarkups['15'] = parseFloat(document.getElementById('battery15kwMarkup').value) || 4500;
+             await saveData();
+             calculatePrice();
+         }
 
         // Installation costs functions
-        function saveInstallationCosts() {
-            installationCosts.flat = parseFloat(document.getElementById('flatRoofCost').value) || 200;
-            installationCosts.ground = parseFloat(document.getElementById('groundCost').value) || 600;
-            
-            document.getElementById('flatRoofDisplay').textContent = installationCosts.flat;
-            document.getElementById('groundDisplay').textContent = installationCosts.ground;
-            
-            saveData();
-            calculatePrice();
-        }
+                 async function saveInstallationCosts() {
+             installationCosts.flat = parseFloat(document.getElementById('flatRoofCost').value) || 200;
+             installationCosts.ground = parseFloat(document.getElementById('groundCost').value) || 600;
+             
+             document.getElementById('flatRoofDisplay').textContent = installationCosts.flat;
+             document.getElementById('groundDisplay').textContent = installationCosts.ground;
+             
+             await saveData();
+             calculatePrice();
+         }
 
         function updateSettingsDisplay() {
             document.getElementById('battery10kwMarkup').value = batteryMarkups['10'];
@@ -1173,88 +1137,81 @@
             });
         }
 
-        function addProduct(type) {
-            const name = prompt(`Nazwa ${type === 'panels' ? 'panelu' : type === 'batteries' ? 'magazynu' : type === 'inverters' ? 'falownika' : 'kompletu'}:`);
-            const price = parseFloat(prompt('Cena netto:')) || 0;
-            const markup = parseFloat(prompt('Narzut (opcjonalnie):')) || 0;
-            
-            if (name && price) {
-                const newId = Math.max(...products[type].map(p => p.id), 0) + 1;
-                const newProduct = {id: newId, name, price, markup};
-                
-                if (type === 'panels' || type === 'completes') {
-                    const power = parseFloat(prompt('Moc (kW):')) || 0;
-                    newProduct.power = power;
-                }
-                
-                products[type].push(newProduct);
-                saveData();
-                updateAdminLists();
-                updateProductLists();
-                
-                // Track product addition
-                analytics.logEvent('add_product', {
-                    product_type: type,
-                    product_name: name,
-                    product_price: price
-                });
-            }
-        }
+                 async function addProduct(type) {
+             const name = prompt(`Nazwa ${type === 'panels' ? 'panelu' : type === 'batteries' ? 'magazynu' : type === 'inverters' ? 'falownika' : 'kompletu'}:`);
+             const price = parseFloat(prompt('Cena netto:')) || 0;
+             const markup = parseFloat(prompt('Narzut (opcjonalnie):')) || 0;
+             
+             if (name && price) {
+                 const newId = Math.max(...products[type].map(p => p.id), 0) + 1;
+                 const newProduct = {id: newId, name, price, markup};
+                 
+                 if (type === 'panels' || type === 'completes') {
+                     const power = parseFloat(prompt('Moc (kW):')) || 0;
+                     newProduct.power = power;
+                 }
+                 
+                 products[type].push(newProduct);
+                 await saveData();
+                 updateAdminLists();
+                 updateProductLists();
+             }
+         }
 
-        function updateProduct(type, id, field, value) {
-            const product = products[type].find(p => p.id === id);
-            if (product) {
-                if (field === 'price' || field === 'markup' || field === 'power') {
-                    product[field] = parseFloat(value) || 0;
-                } else {
-                    product[field] = value;
-                }
-                saveData();
-                updateProductLists();
-                calculatePrice();
-            }
-        }
+                 async function updateProduct(type, id, field, value) {
+             const product = products[type].find(p => p.id === id);
+             if (product) {
+                 if (field === 'price' || field === 'markup' || field === 'power') {
+                     product[field] = parseFloat(value) || 0;
+                 } else {
+                     product[field] = value;
+                 }
+                 await saveData();
+                 updateProductLists();
+                 calculatePrice();
+             }
+         }
 
-        function deleteProduct(type, id) {
-            if (confirm('Czy na pewno chcesz usunąć ten produkt?')) {
-                products[type] = products[type].filter(p => p.id !== id);
-                saveData();
-                updateAdminLists();
-                updateProductLists();
-                calculatePrice();
-            }
-        }
+                 async function deleteProduct(type, id) {
+             if (confirm('Czy na pewno chcesz usunąć ten produkt?')) {
+                 products[type] = products[type].filter(p => p.id !== id);
+                 await saveData();
+                 updateAdminLists();
+                 updateProductLists();
+                 calculatePrice();
+             }
+         }
 
-        function addBank() {
-            const name = prompt('Nazwa banku:');
-            const rate = parseFloat(prompt('Oprocentowanie (%):')) || 0;
-            
-            if (name && rate) {
-                banks.push({name, rate});
-                saveData();
-                updateBanksAdminList();
-                updateProductLists();
-            }
-        }
+                 async function addBank() {
+             const name = prompt('Nazwa banku:');
+             const rate = parseFloat(prompt('Oprocentowanie (%):')) || 0;
+             
+             if (name && rate) {
+                 banks.push({name, rate});
+                 await saveData();
+                 updateBanksAdminList();
+                 updateProductLists();
+             }
+         }
 
-        function updateBank(index, field, value) {
-            if (field === 'rate') {
-                banks[index][field] = parseFloat(value) || 0;
-            } else {
-                banks[index][field] = value;
-            }
-            saveData();
-            updateProductLists();
-        }
+                 async function updateBank(index, field, value) {
+             if (field === 'rate') {
+                 banks[index][field] = parseFloat(value) || 0;
+             } else {
+                 banks[index][field] = value;
+             }
+             await saveData();
+             updateProductLists();
+         }
 
-        function deleteBank(index) {
-            if (confirm('Czy na pewno chcesz usunąć ten bank?')) {
-                banks.splice(index, 1);
-                saveData();
-                updateBanksAdminList();
-                updateProductLists();
-            }
-        }
+                 async function deleteBank(index) {
+             if (confirm('Czy na pewno chcesz usunąć ten bank?')) {
+                 banks.splice(index, 1);
+                 await saveData();
+                 updateBanksAdminList();
+                 updateProductLists();
+             }
+         }
 
         function refreshData() {
             updateAdminLists();
@@ -1262,63 +1219,11 @@
             alert('Dane zostały odświeżone!');
         }
 
-        // Real-time synchronization
-        function setupRealtimeSync() {
-            updateSyncStatus('Łączenie...', 'yellow');
-            
-            db.collection('data').doc('products').onSnapshot((doc) => {
-                if (doc.exists) {
-                    products = doc.data();
-                    updateProductLists();
-                    if (document.getElementById('adminPanel').classList.contains('hide') === false) {
-                        updateAdminLists();
-                    }
-                }
-                updateSyncStatus('Synchronizacja aktywna', 'green');
-            }, (error) => {
-                console.error('Błąd synchronizacji produktów:', error);
-                updateSyncStatus('Błąd synchronizacji', 'red');
-            });
-
-            db.collection('data').doc('banks').onSnapshot((doc) => {
-                if (doc.exists) {
-                    banks = doc.data().banks;
-                    updateProductLists();
-                    if (document.getElementById('adminPanel').classList.contains('hide') === false) {
-                        updateBanksAdminList();
-                    }
-                }
-            }, (error) => {
-                console.error('Błąd synchronizacji banków:', error);
-            });
-
-            db.collection('data').doc('settings').onSnapshot((doc) => {
-                if (doc.exists) {
-                    const settings = doc.data();
-                    installationCosts = settings.installationCosts;
-                    batteryMarkups = settings.batteryMarkups;
-                    updateSettingsDisplay();
-                    calculatePrice();
-                }
-            }, (error) => {
-                console.error('Błąd synchronizacji ustawień:', error);
-            });
-        }
-
-        function updateSyncStatus(message, color) {
-            const statusElement = document.getElementById('syncStatus');
-            const icon = statusElement.querySelector('i');
-            const text = statusElement.querySelector('span');
-            
-            icon.className = `fas fa-circle text-${color}-400 mr-2`;
-            text.textContent = message;
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadData();
-            setupRealtimeSync();
-        });
+                 // Initialize
+         document.addEventListener('DOMContentLoaded', async function() {
+             await loadData();
+             updateProductLists();
+         });
     </script>
 </body>
 </html>
