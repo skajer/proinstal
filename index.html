@@ -1219,11 +1219,36 @@
             alert('Dane zostały odświeżone!');
         }
 
-                 // Initialize
-         document.addEventListener('DOMContentLoaded', async function() {
-             await loadData();
-             updateProductLists();
-         });
+                         // Make functions globally accessible
+        window.selectCategory = selectCategory;
+        window.selectBatteryPower = selectBatteryPower;
+        window.selectInstallation = selectInstallation;
+        window.toggleOptions = toggleOptions;
+        window.calculatePrice = calculatePrice;
+        window.updateDownPayment = updateDownPayment;
+        window.updateDownPaymentFromAmount = updateDownPaymentFromAmount;
+        window.calculateCredit = calculateCredit;
+        window.saveBatteryMarkups = saveBatteryMarkups;
+        window.saveInstallationCosts = saveInstallationCosts;
+        window.showAdminLogin = showAdminLogin;
+        window.closeAdminLogin = closeAdminLogin;
+        window.checkAdminPassword = checkAdminPassword;
+        window.showAdmin = showAdmin;
+        window.closeAdmin = closeAdmin;
+        window.showAdminSection = showAdminSection;
+        window.addProduct = addProduct;
+        window.updateProduct = updateProduct;
+        window.deleteProduct = deleteProduct;
+        window.addBank = addBank;
+        window.updateBank = updateBank;
+        window.deleteBank = deleteBank;
+        window.refreshData = refreshData;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadData();
+            updateProductLists();
+        });
     </script>
 </body>
 </html>
