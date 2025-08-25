@@ -7,6 +7,14 @@
     <title>Kalkulator PRO INSTAL</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
+    
+
+    
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -77,9 +85,15 @@
                     <h1 class="text-3xl font-bold">Kalkulator PRO INSTAL</h1>
                     <p class="text-blue-100 mt-1">Profesjonalne wyceny instalacji OZE</p>
                 </div>
-                <button onclick="showAdminLogin()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
-                    <i class="fas fa-cog mr-2"></i>Panel Admin
-                </button>
+                <div class="flex items-center space-x-4">
+                    <div id="syncStatus" class="flex items-center text-sm">
+                        <i class="fas fa-circle text-green-400 mr-2"></i>
+                        <span>Synchronizacja aktywna</span>
+                    </div>
+                    <button onclick="showAdminLogin()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-cog mr-2"></i>Panel Admin
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -91,6 +105,18 @@
                 <div class="bg-white rounded-xl card-shadow p-6">
                     <h2 class="text-2xl font-bold mb-6 text-gray-800">Kalkulator Instalacji</h2>
                     <p class="text-gray-600 mb-6">Wybierz odpowiednie produkty dla Twojego klienta</p>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-sync-alt text-blue-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Dane synchronizowane w czasie rzeczywistym!</strong> Wszystkie zmiany w panelu administracyjnym są automatycznie widoczne dla wszystkich użytkowników.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Category Selection -->
                     <div class="mb-6">
@@ -498,6 +524,36 @@
     </div>
 
     <script>
+        // Simple encryption/decryption for Firebase keys
+        function decodeConfig(encoded) {
+            const key = 'oze-kalk-2025';
+            let decoded = '';
+            for (let i = 0; i < encoded.length; i++) {
+                decoded += String.fromCharCode(encoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return decoded;
+        }
+
+        // Encoded Firebase configuration
+        const encodedConfig = 'HXx9fjzpe5ZRzCuGen9ivXrsZ2E697yXMFE|jdmsystems-a3bc4.firebaseapp.com|jdmsystems-a3bc4|jdmsystems-a3bc4.firebasestorage.app|212965364723|1:212965364723:web:acbf246c2d9df8ca8d7886|G-6HYB12HJGW';
+        
+        // Decode and parse configuration
+        const configParts = decodeConfig(encodedConfig).split('|');
+        const firebaseConfig = {
+            apiKey: configParts[0],
+            authDomain: configParts[1],
+            projectId: configParts[2],
+            storageBucket: configParts[3],
+            messagingSenderId: configParts[4],
+            appId: configParts[5],
+            measurementId: configParts[6]
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
+
         // Global variables
         let currentCategory = '';
         let selectedProducts = {};
@@ -544,8 +600,53 @@
             ground: 600
         };
 
-        // Load data from localStorage
-        function loadData() {
+        // Load data from Firebase
+        async function loadData() {
+            try {
+                const productsDoc = await db.collection('data').doc('products').get();
+                const banksDoc = await db.collection('data').doc('banks').get();
+                const settingsDoc = await db.collection('data').doc('settings').get();
+                
+                if (productsDoc.exists) {
+                    products = productsDoc.data();
+                }
+                if (banksDoc.exists) {
+                    banks = banksDoc.data().banks;
+                }
+                if (settingsDoc.exists) {
+                    const settings = settingsDoc.data();
+                    installationCosts = settings.installationCosts;
+                    batteryMarkups = settings.batteryMarkups;
+                }
+                
+                updateProductLists();
+                updateBanksList();
+                updateSettingsDisplay();
+            } catch (error) {
+                console.error('Błąd podczas ładowania danych:', error);
+                // Fallback to localStorage
+                loadFromLocalStorage();
+            }
+        }
+
+        // Save data to Firebase
+        async function saveData() {
+            try {
+                await db.collection('data').doc('products').set(products);
+                await db.collection('data').doc('banks').set({banks: banks});
+                await db.collection('data').doc('settings').set({
+                    installationCosts: installationCosts,
+                    batteryMarkups: batteryMarkups
+                });
+            } catch (error) {
+                console.error('Błąd podczas zapisywania danych:', error);
+                // Fallback to localStorage
+                saveToLocalStorage();
+            }
+        }
+
+        // Fallback functions
+        function loadFromLocalStorage() {
             const savedProducts = localStorage.getItem('products');
             const savedBanks = localStorage.getItem('banks');
             const savedInstallationCosts = localStorage.getItem('installationCosts');
@@ -563,14 +664,9 @@
             if (savedBatteryMarkups) {
                 batteryMarkups = JSON.parse(savedBatteryMarkups);
             }
-            
-            updateProductLists();
-            updateBanksList();
-            updateSettingsDisplay();
         }
 
-        // Save data to localStorage
-        function saveData() {
+        function saveToLocalStorage() {
             localStorage.setItem('products', JSON.stringify(products));
             localStorage.setItem('banks', JSON.stringify(banks));
             localStorage.setItem('installationCosts', JSON.stringify(installationCosts));
@@ -580,6 +676,11 @@
         // Category selection
         function selectCategory(category) {
             currentCategory = category;
+            
+            // Track category selection
+            analytics.logEvent('select_category', {
+                category: category
+            });
             
             // Update category cards
             document.querySelectorAll('.category-card').forEach(card => {
@@ -1090,6 +1191,13 @@
                 saveData();
                 updateAdminLists();
                 updateProductLists();
+                
+                // Track product addition
+                analytics.logEvent('add_product', {
+                    product_type: type,
+                    product_name: name,
+                    product_price: price
+                });
             }
         }
 
@@ -1154,10 +1262,62 @@
             alert('Dane zostały odświeżone!');
         }
 
+        // Real-time synchronization
+        function setupRealtimeSync() {
+            updateSyncStatus('Łączenie...', 'yellow');
+            
+            db.collection('data').doc('products').onSnapshot((doc) => {
+                if (doc.exists) {
+                    products = doc.data();
+                    updateProductLists();
+                    if (document.getElementById('adminPanel').classList.contains('hide') === false) {
+                        updateAdminLists();
+                    }
+                }
+                updateSyncStatus('Synchronizacja aktywna', 'green');
+            }, (error) => {
+                console.error('Błąd synchronizacji produktów:', error);
+                updateSyncStatus('Błąd synchronizacji', 'red');
+            });
+
+            db.collection('data').doc('banks').onSnapshot((doc) => {
+                if (doc.exists) {
+                    banks = doc.data().banks;
+                    updateProductLists();
+                    if (document.getElementById('adminPanel').classList.contains('hide') === false) {
+                        updateBanksAdminList();
+                    }
+                }
+            }, (error) => {
+                console.error('Błąd synchronizacji banków:', error);
+            });
+
+            db.collection('data').doc('settings').onSnapshot((doc) => {
+                if (doc.exists) {
+                    const settings = doc.data();
+                    installationCosts = settings.installationCosts;
+                    batteryMarkups = settings.batteryMarkups;
+                    updateSettingsDisplay();
+                    calculatePrice();
+                }
+            }, (error) => {
+                console.error('Błąd synchronizacji ustawień:', error);
+            });
+        }
+
+        function updateSyncStatus(message, color) {
+            const statusElement = document.getElementById('syncStatus');
+            const icon = statusElement.querySelector('i');
+            const text = statusElement.querySelector('span');
+            
+            icon.className = `fas fa-circle text-${color}-400 mr-2`;
+            text.textContent = message;
+        }
+
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            updateProductLists();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadData();
+            setupRealtimeSync();
         });
     </script>
 </body>
