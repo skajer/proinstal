@@ -140,7 +140,7 @@
                         <!-- Complete Selection -->
                         <div id="completeSection" class="hide">
                             <h4 class="font-semibold mb-3 text-gray-700">Komplet PV + Magazyn</h4>
-                            <select id="completeSelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="calculatePrice()">
+                            <select id="completeSelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="onCompleteChange()">
                                 <option value="">Wybierz komplet...</option>
                             </select>
                             
@@ -160,6 +160,14 @@
                                         <h6 class="font-semibold">15kWh</h6>
                                         <p class="text-sm text-gray-500">Premium</p>
                                     </div>
+                                </div>
+                                
+                                <!-- Battery Model Selection -->
+                                <div id="batteryModelSelection" class="hide mt-4">
+                                    <h6 class="font-semibold mb-3 text-gray-700">Wybierz model magazynu</h6>
+                                    <select id="batteryModelSelect" class="w-full p-3 border border-gray-300 rounded-lg" onchange="calculatePrice()">
+                                        <option value="">Wybierz model...</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -373,9 +381,15 @@
                     <div id="adminProducts">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-2xl font-bold text-gray-800">Zarządzanie Produktami</h3>
-                            <button onclick="refreshData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
-                                <i class="fas fa-sync-alt mr-2"></i>Odśwież dane
-                            </button>
+                                                         <button onclick="refreshData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                                 <i class="fas fa-sync-alt mr-2"></i>Odśwież dane
+                             </button>
+                             <button onclick="restoreDefaultData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg ml-2">
+                                 <i class="fas fa-undo mr-2"></i>Przywróć domyślne
+                             </button>
+                             <button onclick="downloadBackup()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg ml-2">
+                                 <i class="fas fa-download mr-2"></i>Pobierz backup
+                             </button>
                         </div>
                         <p class="text-gray-600 mb-6">Edytuj, dodawaj i zmieniaj kolejność produktów</p>
 
@@ -562,46 +576,106 @@
         // Initialize Firebase
         let app;
         let db;
-        if (!firebase.apps.length) {
-            app = firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        } else {
-            app = firebase.app();
-            db = firebase.firestore();
+        try {
+            console.log("Initializing Firebase...");
+            if (!firebase.apps.length) {
+                console.log("Creating new Firebase app...");
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                console.log("Firebase app created successfully");
+            } else {
+                console.log("Using existing Firebase app...");
+                app = firebase.app();
+                db = firebase.firestore();
+                console.log("Firebase app reused successfully");
+            }
+            console.log("Firebase initialized successfully, db object:", db);
+        } catch (error) {
+            console.error("Error initializing Firebase:", error);
+            console.error("Error details:", error.message);
         }
 
-                 // Load data from Firebase
-         async function loadData() {
-             try {
-                 const productsDoc = await db.collection('data').doc('products').get();
-                 if (productsDoc.exists) {
-                     const data = productsDoc.data();
-                     if (data.panels) products.panels = data.panels;
-                     if (data.batteries) products.batteries = data.batteries;
-                     if (data.inverters) products.inverters = data.inverters;
-                     if (data.completes) products.completes = data.completes;
-                 }
+                         // Load data from Firebase
+        async function loadData() {
+            try {
+                console.log("Loading data from Firebase...");
+                
+                // Check if Firebase is available
+                if (!db) {
+                    console.error("Firebase db is not available!");
+                    return;
+                }
+                
+                console.log("Firebase db is available, proceeding with data loading...");
+                
+                const productsDoc = await db.collection('data').doc('products').get();
+                console.log("Products doc exists:", productsDoc.exists);
+                if (productsDoc.exists) {
+                    const data = productsDoc.data();
+                    console.log("Products data:", data);
+                    if (data.panels) {
+                        products.panels = data.panels;
+                        console.log("Loaded panels:", products.panels);
+                    }
+                    if (data.batteries) {
+                        products.batteries = data.batteries;
+                        console.log("Loaded batteries:", products.batteries);
+                    }
+                    if (data.inverters) {
+                        products.inverters = data.inverters;
+                        console.log("Loaded inverters:", products.inverters);
+                    }
+                    if (data.completes) {
+                        products.completes = data.completes;
+                        console.log("Loaded completes:", products.completes);
+                    }
+                } else {
+                    console.log("No products document found, using default data");
+                }
 
-                 const banksDoc = await db.collection('data').doc('banks').get();
-                 if (banksDoc.exists) {
-                     const data = banksDoc.data();
-                     if (data.banks) banks = data.banks;
-                 }
+                const banksDoc = await db.collection('data').doc('banks').get();
+                console.log("Banks doc exists:", banksDoc.exists);
+                if (banksDoc.exists) {
+                    const data = banksDoc.data();
+                    console.log("Banks data:", data);
+                    if (data.banks) {
+                        banks = data.banks;
+                        console.log("Loaded banks:", banks);
+                    }
+                } else {
+                    console.log("No banks document found, using default data");
+                }
 
-                 const settingsDoc = await db.collection('data').doc('settings').get();
-                 if (settingsDoc.exists) {
-                     const data = settingsDoc.data();
-                     if (data.installationCosts) installationCosts = data.installationCosts;
-                     if (data.batteryMarkups) batteryMarkups = data.batteryMarkups;
-                 }
-                 
-                 updateProductLists();
-                 updateBanksList();
-                 updateSettingsDisplay();
-             } catch (error) {
-                 console.error("Error loading data from Firebase:", error);
-             }
-         }
+                const settingsDoc = await db.collection('data').doc('settings').get();
+                console.log("Settings doc exists:", settingsDoc.exists);
+                if (settingsDoc.exists) {
+                    const data = settingsDoc.data();
+                    console.log("Settings data:", data);
+                    if (data.installationCosts) {
+                        installationCosts = data.installationCosts;
+                        console.log("Loaded installation costs:", installationCosts);
+                    }
+                    if (data.batteryMarkups) {
+                        batteryMarkups = data.batteryMarkups;
+                        console.log("Loaded battery markups:", batteryMarkups);
+                    }
+                } else {
+                    console.log("No settings document found, using default data");
+                }
+                
+                console.log("Final products state:", products);
+                console.log("Final banks state:", banks);
+                
+                updateProductLists();
+                updateBanksList();
+                updateSettingsDisplay();
+                console.log("Data loading completed successfully!");
+            } catch (error) {
+                console.error("Error loading data from Firebase:", error);
+                console.error("Error details:", error.message);
+                console.error("Error stack:", error.stack);
+            }
+        }
 
                  // Save data to Firebase
          async function saveData() {
@@ -678,6 +752,59 @@
             
             document.getElementById(`battery-${power}kw`).classList.remove('border-gray-200');
             document.getElementById(`battery-${power}kw`).classList.add('border-blue-500', 'bg-blue-50');
+            
+            // Show battery model selection and populate with batteries of selected power
+            const batteryModelSelection = document.getElementById('batteryModelSelection');
+            const batteryModelSelect = document.getElementById('batteryModelSelect');
+            
+            batteryModelSelection.classList.remove('hide');
+            batteryModelSelect.innerHTML = '<option value="">Wybierz model...</option>';
+            
+            // Filter batteries by capacity (approximately matching power)
+            const filteredBatteries = products.batteries.filter(battery => {
+                const name = battery.name.toLowerCase();
+                if (power === 5) {
+                    return name.includes('5') && (name.includes('kwh') || name.includes('5,12'));
+                } else if (power === 10) {
+                    return name.includes('10') && name.includes('kwh');
+                } else if (power === 15) {
+                    return name.includes('15') && name.includes('kwh');
+                }
+                return false;
+            });
+            
+            filteredBatteries.forEach(battery => {
+                const option = document.createElement('option');
+                option.value = battery.id;
+                option.textContent = battery.name;
+                batteryModelSelect.appendChild(option);
+            });
+            
+            calculatePrice();
+        }
+
+        // Handle complete selection change
+        function onCompleteChange() {
+            const completeSelect = document.getElementById('completeSelect');
+            const completeBatteryPower = document.getElementById('completeBatteryPower');
+            const batteryModelSelection = document.getElementById('batteryModelSelection');
+            
+            if (completeSelect.value) {
+                // Show battery power selection
+                completeBatteryPower.classList.remove('hide');
+            } else {
+                // Hide battery power and model selection
+                completeBatteryPower.classList.add('hide');
+                batteryModelSelection.classList.add('hide');
+                
+                // Reset selections
+                selectedBatteryPower = null;
+                document.querySelectorAll('[id^="battery-"]').forEach(card => {
+                    card.classList.remove('border-blue-500', 'bg-blue-50');
+                    card.classList.add('border-gray-200');
+                });
+                document.getElementById('batteryModelSelect').value = '';
+            }
             
             calculatePrice();
         }
@@ -831,6 +958,7 @@
             } else if (currentCategory === 'complete') {
                 const completeId = document.getElementById('completeSelect').value;
                 const inverterId = document.getElementById('inverterSelect').value;
+                const batteryModelId = document.getElementById('batteryModelSelect').value;
                 
                 if (completeId) {
                     const complete = products.completes.find(c => c.id == completeId);
@@ -838,11 +966,20 @@
                     selectedPower = complete.power;
                     productName = complete.name;
                     
-                    // Add battery power markup
-                    if (selectedBatteryPower === 10) {
-                        totalPrice += batteryMarkups['10'];
-                    } else if (selectedBatteryPower === 15) {
-                        totalPrice += batteryMarkups['15'];
+                    // Add specific battery model price if selected
+                    if (batteryModelId) {
+                        const selectedBattery = products.batteries.find(b => b.id == batteryModelId);
+                        if (selectedBattery) {
+                            totalPrice += selectedBattery.price + selectedBattery.markup;
+                            productName += ` + ${selectedBattery.name}`;
+                        }
+                    } else {
+                        // Fallback to old markup system if no specific model selected
+                        if (selectedBatteryPower === 10) {
+                            totalPrice += batteryMarkups['10'];
+                        } else if (selectedBatteryPower === 15) {
+                            totalPrice += batteryMarkups['15'];
+                        }
                     }
                 }
                 
@@ -1216,12 +1353,63 @@
         function refreshData() {
             updateAdminLists();
             updateProductLists();
-            alert('Dane zostały odświeżone!');
+            alert('Widok został odświeżony!');
+        }
+
+        async function restoreDefaultData() {
+            if (confirm('Czy na pewno chcesz przywrócić domyślne dane? To nadpisze wszystkie istniejące produkty.')) {
+                try {
+                    await saveData();
+                    updateAdminLists();
+                    updateProductLists();
+                    alert('Domyślne dane zostały przywrócone!');
+                } catch (error) {
+                    console.error('Error restoring default data:', error);
+                    alert('Błąd podczas przywracania danych!');
+                }
+            }
+        }
+
+        async function downloadBackup() {
+            try {
+                const backupData = {
+                    products: {
+                        panels: products.panels,
+                        batteries: products.batteries,
+                        inverters: products.inverters,
+                        completes: products.completes
+                    },
+                    banks: {
+                        banks: banks
+                    },
+                    settings: {
+                        installationCosts: installationCosts,
+                        batteryMarkups: batteryMarkups
+                    },
+                    timestamp: new Date().toISOString()
+                };
+
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `firebase-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                alert('Backup został pobrany!');
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                alert('Błąd podczas tworzenia backupu!');
+            }
         }
 
                          // Make functions globally accessible
         window.selectCategory = selectCategory;
         window.selectBatteryPower = selectBatteryPower;
+        window.onCompleteChange = onCompleteChange;
         window.selectInstallation = selectInstallation;
         window.toggleOptions = toggleOptions;
         window.calculatePrice = calculatePrice;
@@ -1242,12 +1430,23 @@
         window.addBank = addBank;
         window.updateBank = updateBank;
         window.deleteBank = deleteBank;
-        window.refreshData = refreshData;
+                 window.refreshData = refreshData;
+         window.restoreDefaultData = restoreDefaultData;
+         window.downloadBackup = downloadBackup;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
-            await loadData();
-            updateProductLists();
+            console.log("DOM loaded, starting initialization...");
+            try {
+                await loadData();
+                console.log("loadData completed");
+                updateProductLists();
+                console.log("updateProductLists completed");
+                console.log("Initialization completed successfully!");
+            } catch (error) {
+                console.error("Error during initialization:", error);
+                console.error("Error details:", error.message);
+            }
         });
     </script>
 </body>
