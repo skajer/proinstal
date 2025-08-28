@@ -208,11 +208,11 @@
                             <div class="bg-gray-50 p-4 rounded-lg space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Metry przekopu (<span id="excavationCostDisplay">40</span> zł/m)</label>
-                                    <input type="number" id="excavationMeters" min="0" value="0" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()">
+                                    <input type="number" id="excavationMeters" min="0" value="0" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()" oninput="calculatePrice()">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Metry kabla ziemnego z armaturą (<span id="cableCostDisplay">20</span> zł/m)</label>
-                                    <input type="number" id="cableMeters" min="0" value="0" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()">
+                                    <input type="number" id="cableMeters" min="0" value="0" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()" oninput="calculatePrice()">
                                 </div>
                             </div>
                         </div>
@@ -858,6 +858,8 @@
 
                  // Update product lists
          function updateProductLists() {
+             console.log('Updating product lists, products:', products);
+             
              // Update PV select
              const pvSelect = document.getElementById('pvSelect');
              pvSelect.innerHTML = '<option value="">Wybierz moc instalacji...</option>';
@@ -881,11 +883,13 @@
              // Update complete select
              const completeSelect = document.getElementById('completeSelect');
              completeSelect.innerHTML = '<option value="">Wybierz komplet...</option>';
+             console.log('Available completes:', products.completes);
              products.completes.forEach(complete => {
                  const option = document.createElement('option');
                  option.value = complete.id;
                  option.textContent = complete.name;
                  completeSelect.appendChild(option);
+                 console.log('Added complete option:', complete.id, complete.name);
              });
 
              // Show/hide battery power selection for complete
@@ -947,9 +951,19 @@
             
             // Show/hide ground options
             const groundOptions = document.getElementById('groundOptions');
+            console.log('Installation type selected:', type, 'Ground options element:', !!groundOptions);
             if (groundOptions) {
                 if (type === 'ground') {
                     groundOptions.classList.remove('hide');
+                    console.log('Ground options should now be visible');
+                    
+                    // Check if input fields exist
+                    const excavationEl = document.getElementById('excavationMeters');
+                    const cableEl = document.getElementById('cableMeters');
+                    console.log('Ground input fields:', {
+                        excavationEl: !!excavationEl,
+                        cableEl: !!cableEl
+                    });
                 } else {
                     groundOptions.classList.add('hide');
                     // Reset ground option values when not ground installation
@@ -986,6 +1000,7 @@
             let productName = '';
 
             // Get selected products
+            console.log('Current category:', currentCategory);
             if (currentCategory === 'pv') {
                 const pvId = document.getElementById('pvSelect').value;
                 const inverterId = document.getElementById('inverterSelect').value;
@@ -1024,11 +1039,15 @@
                 const inverterId = document.getElementById('inverterSelect').value;
                 const batteryModelId = document.getElementById('batteryModelSelect').value;
                 
+                console.log('Complete selection:', {completeId, inverterId, batteryModelId});
+                
                 if (completeId) {
                     const complete = products.completes.find(c => c.id == completeId);
+                    console.log('Found complete:', complete);
                     totalPrice += complete.price + complete.markup;
                     selectedPower = complete.power;
                     productName = complete.name;
+                    console.log('Set selectedPower to:', selectedPower);
                     
                     // For complete packages, battery model selection is just for display
                     // Price is already included in the complete package price
@@ -1048,12 +1067,24 @@
             }
 
             // Add installation costs
-            if (selectedPower > 0) {
+            console.log('Installation costs check:', {
+                selectedPower,
+                installationType,
+                installationCosts
+            });
+            
+            // Temporary: always calculate installation costs if installation type is selected
+            if (selectedPower > 0 || (installationType && installationType !== 'standard')) {
+                console.log('Calculating installation costs...');
                 if (installationType === 'flat') {
-                    const installCost = selectedPower * installationCosts.flat;
+                    const powerForCalculation = selectedPower || 5; // Default 5kW if no power set
+                    const installCost = powerForCalculation * installationCosts.flat;
                     totalPrice += installCost;
+                    console.log('Added flat roof cost:', installCost, 'for power:', powerForCalculation);
                 } else if (installationType === 'ground') {
-                    const installCost = selectedPower * installationCosts.ground;
+                    console.log('Processing ground installation...');
+                    const powerForCalculation = selectedPower || 5; // Default 5kW if no power set
+                    const installCost = powerForCalculation * installationCosts.ground;
                     totalPrice += installCost;
                     
                     // Add excavation and cable costs
@@ -1070,17 +1101,23 @@
                     if (excavationMetersEl && cableMetersEl) {
                         const excavationMeters = parseFloat(excavationMetersEl.value) || 0;
                         const cableMeters = parseFloat(cableMetersEl.value) || 0;
-                        const excavationCost = excavationMeters * installationCosts.excavationPerMeter;
-                        const cableCost = cableMeters * installationCosts.cablePerMeter;
+                        
+                        // Use default values if not loaded from Firebase
+                        const excavationPerMeter = installationCosts.excavationPerMeter || 40;
+                        const cablePerMeter = installationCosts.cablePerMeter || 20;
+                        
+                        const excavationCost = excavationMeters * excavationPerMeter;
+                        const cableCost = cableMeters * cablePerMeter;
                         
                         console.log('Ground costs calculation:', {
                             excavationMeters,
                             cableMeters,
-                            excavationPerMeter: installationCosts.excavationPerMeter,
-                            cablePerMeter: installationCosts.cablePerMeter,
+                            excavationPerMeter,
+                            cablePerMeter,
                             excavationCost,
                             cableCost,
-                            totalExtra: excavationCost + cableCost
+                            totalExtra: excavationCost + cableCost,
+                            fullInstallationCosts: installationCosts
                         });
                         
                         totalPrice += excavationCost + cableCost;
@@ -1094,7 +1131,9 @@
             const dealerMarkup = parseFloat(document.getElementById('dealerMarkup').value) || 0;
             totalPrice += dealerMarkup;
 
-            if (totalPrice > 0) {
+            console.log('Final totalPrice:', totalPrice, 'isNaN:', isNaN(totalPrice));
+            
+            if (totalPrice > 0 && !isNaN(totalPrice)) {
                 updateSummary(totalPrice, productName);
             } else {
                 document.getElementById('priceBreakdown').classList.add('hide');
