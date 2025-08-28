@@ -771,6 +771,15 @@
                 // Show installation section for all categories
                 document.getElementById('installationSection').classList.remove('hide');
                 
+                // Default to standard installation (dach skośny)
+                if (installationType === 'standard') {
+                    const standardCard = document.getElementById('install-standard');
+                    if (standardCard) {
+                        standardCard.classList.remove('border-gray-200');
+                        standardCard.classList.add('border-blue-500', 'bg-blue-50');
+                    }
+                }
+                
                 // Highlight active category
                 event.currentTarget.classList.add('active');
             }
@@ -1051,13 +1060,32 @@
                     const excavationMetersEl = document.getElementById('excavationMeters');
                     const cableMetersEl = document.getElementById('cableMeters');
                     
+                    console.log('Ground elements check:', {
+                        excavationEl: !!excavationMetersEl,
+                        cableEl: !!cableMetersEl,
+                        excavationValue: excavationMetersEl?.value,
+                        cableValue: cableMetersEl?.value
+                    });
+                    
                     if (excavationMetersEl && cableMetersEl) {
                         const excavationMeters = parseFloat(excavationMetersEl.value) || 0;
                         const cableMeters = parseFloat(cableMetersEl.value) || 0;
                         const excavationCost = excavationMeters * installationCosts.excavationPerMeter;
                         const cableCost = cableMeters * installationCosts.cablePerMeter;
                         
+                        console.log('Ground costs calculation:', {
+                            excavationMeters,
+                            cableMeters,
+                            excavationPerMeter: installationCosts.excavationPerMeter,
+                            cablePerMeter: installationCosts.cablePerMeter,
+                            excavationCost,
+                            cableCost,
+                            totalExtra: excavationCost + cableCost
+                        });
+                        
                         totalPrice += excavationCost + cableCost;
+                    } else {
+                        console.log('Ground elements not found or not ready');
                     }
                 }
             }
@@ -1150,6 +1178,15 @@
             const annualRate = parseFloat(document.getElementById('bankSelect').value) / 100;
             const monthlyRate = annualRate / 12;
             const months = parseFloat(document.getElementById('creditPeriod').value) * 12;
+            
+            console.log('Credit calculation inputs:', {
+                grossPrice,
+                downPaymentAmount,
+                creditAmount,
+                annualRate,
+                monthlyRate,
+                months
+            });
 
             if (creditAmount > 0 && months > 0 && monthlyRate > 0) {
                 // Calculate monthly payment before subsidy using correct PMT formula
