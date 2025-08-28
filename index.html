@@ -746,6 +746,15 @@
             document.querySelectorAll('#productSelection > div').forEach(section => {
                 section.classList.add('hide');
             });
+            
+            // Reset installation selection and hide ground options
+            installationType = 'standard';
+            document.querySelectorAll('[id^="install-"]').forEach(card => {
+                card.classList.remove('border-blue-500', 'bg-blue-50');
+                card.classList.add('border-gray-200');
+            });
+            const groundOptions = document.getElementById('groundOptions');
+            if (groundOptions) groundOptions.classList.add('hide');
 
             const categoryMap = {
                 'pv': 'pvSection',
@@ -759,10 +768,8 @@
                 // Show inverter section for all categories
                 document.getElementById('inverterSection').classList.remove('hide');
                 
-                // Show installation section only for PV and complete
-                if (category === 'pv' || category === 'complete') {
-                    document.getElementById('installationSection').classList.remove('hide');
-                }
+                // Show installation section for all categories
+                document.getElementById('installationSection').classList.remove('hide');
                 
                 // Highlight active category
                 event.currentTarget.classList.add('active');
@@ -931,13 +938,17 @@
             
             // Show/hide ground options
             const groundOptions = document.getElementById('groundOptions');
-            if (type === 'ground') {
-                groundOptions.classList.remove('hide');
-            } else {
-                groundOptions.classList.add('hide');
-                // Reset ground option values when not ground installation
-                document.getElementById('excavationMeters').value = 0;
-                document.getElementById('cableMeters').value = 0;
+            if (groundOptions) {
+                if (type === 'ground') {
+                    groundOptions.classList.remove('hide');
+                } else {
+                    groundOptions.classList.add('hide');
+                    // Reset ground option values when not ground installation
+                    const excavationEl = document.getElementById('excavationMeters');
+                    const cableEl = document.getElementById('cableMeters');
+                    if (excavationEl) excavationEl.value = 0;
+                    if (cableEl) cableEl.value = 0;
+                }
             }
             
             calculatePrice();
@@ -990,6 +1001,8 @@
                     const battery = products.batteries.find(b => b.id == batteryId);
                     totalPrice += battery.price + battery.markup;
                     productName = battery.name;
+                    // For battery-only installation, assume 5kW power for installation cost calculation
+                    selectedPower = 5;
                 }
                 
                 if (inverterId) {
@@ -1035,12 +1048,17 @@
                     totalPrice += installCost;
                     
                     // Add excavation and cable costs
-                    const excavationMeters = parseFloat(document.getElementById('excavationMeters').value) || 0;
-                    const cableMeters = parseFloat(document.getElementById('cableMeters').value) || 0;
-                    const excavationCost = excavationMeters * installationCosts.excavationPerMeter;
-                    const cableCost = cableMeters * installationCosts.cablePerMeter;
+                    const excavationMetersEl = document.getElementById('excavationMeters');
+                    const cableMetersEl = document.getElementById('cableMeters');
                     
-                    totalPrice += excavationCost + cableCost;
+                    if (excavationMetersEl && cableMetersEl) {
+                        const excavationMeters = parseFloat(excavationMetersEl.value) || 0;
+                        const cableMeters = parseFloat(cableMetersEl.value) || 0;
+                        const excavationCost = excavationMeters * installationCosts.excavationPerMeter;
+                        const cableCost = cableMeters * installationCosts.cablePerMeter;
+                        
+                        totalPrice += excavationCost + cableCost;
+                    }
                 }
             }
 
