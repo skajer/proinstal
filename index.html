@@ -201,6 +201,21 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Ground Installation Options -->
+                        <div id="groundOptions" class="hide">
+                            <h4 class="font-semibold mb-3 text-gray-700">Opcje instalacji gruntowej</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Metry przekopu (<span id="excavationCostDisplay">40</span> zł/m)</label>
+                                    <input type="number" id="excavationMeters" min="0" value="0" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Metry kabla ziemnego z armaturą (<span id="cableCostDisplay">20</span> zł/m)</label>
+                                    <input type="number" id="cableMeters" min="0" value="0" class="w-full p-2 border border-gray-300 rounded" onchange="calculatePrice()">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Additional Options -->
@@ -319,21 +334,25 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Okres kredytu (lata)</label>
                             <select id="creditPeriod" class="w-full p-2 border border-gray-300 rounded" onchange="calculateCredit()">
+                                <option value="2">2 lata</option>
+                                <option value="3">3 lata</option>
+                                <option value="4">4 lata</option>
                                 <option value="5">5 lat</option>
+                                <option value="6">6 lat</option>
+                                <option value="7">7 lat</option>
+                                <option value="8">8 lat</option>
+                                <option value="9">9 lat</option>
                                 <option value="10">10 lat</option>
-                                <option value="15">15 lat</option>
-                                <option value="20">20 lat</option>
-                                <option value="25">25 lat</option>
                             </select>
                         </div>
 
                         <div class="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Kwota kredytu (przed dotacją):</span>
+                                <span class="text-gray-600">Kwota kredytu:</span>
                                 <span id="creditAmount" class="font-semibold">0 zł</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Rata miesięczna (przed dotacją):</span>
+                                <span class="text-gray-600">Rata miesięczna:</span>
                                 <span id="monthlyPayment" class="font-semibold">0 zł</span>
                             </div>
                             <div class="flex justify-between border-t pt-2">
@@ -341,7 +360,7 @@
                                 <span id="monthlyPaymentAfter" class="font-semibold text-green-600">0 zł</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Całkowity koszt:</span>
+                                <span class="text-gray-600">Całkowity koszt z kredytem:</span>
                                 <span id="totalCost" class="font-semibold">0 zł</span>
                             </div>
                         </div>
@@ -487,11 +506,21 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Montaż na gruncie (zł/kW)</label>
                                         <input type="number" id="groundCost" value="600" class="w-full p-2 border border-gray-300 rounded" onchange="saveInstallationCosts()">
                                     </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Przekop (zł/m)</label>
+                                        <input type="number" id="excavationCost" value="40" class="w-full p-2 border border-gray-300 rounded" onchange="saveInstallationCosts()">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Kabel ziemny z armaturą (zł/m)</label>
+                                        <input type="number" id="cableCost" value="20" class="w-full p-2 border border-gray-300 rounded" onchange="saveInstallationCosts()">
+                                    </div>
                                 </div>
                                 <div class="mt-4 text-sm text-gray-600">
                                     <p><strong>Dach skośny:</strong> Standard (0 zł)</p>
                                     <p><strong>Dach płaski:</strong> +<span id="flatRoofDisplay">200</span> zł/kW</p>
                                     <p><strong>Grunt:</strong> +<span id="groundDisplay">600</span> zł/kW</p>
+                                    <p><strong>Przekop:</strong> <span id="excavationDisplay">40</span> zł/m</p>
+                                    <p><strong>Kabel ziemny:</strong> <span id="cableDisplay">20</span> zł/m</p>
                                 </div>
                             </div>
                         </div>
@@ -560,7 +589,9 @@
 
         let installationCosts = {
             flat: 200,
-            ground: 600
+            ground: 600,
+            cablePerMeter: 20,
+            excavationPerMeter: 40
         };
 
                  // Firebase configuration
@@ -889,6 +920,7 @@
         // Installation type selection
         function selectInstallation(type) {
             installationType = type;
+            console.log('Installation type selected:', type, 'Cost per kW:', installationCosts[type] || 0);
             
             document.querySelectorAll('[id^="install-"]').forEach(card => {
                 card.classList.remove('border-blue-500', 'bg-blue-50');
@@ -897,6 +929,17 @@
             
             document.getElementById(`install-${type}`).classList.remove('border-gray-200');
             document.getElementById(`install-${type}`).classList.add('border-blue-500', 'bg-blue-50');
+            
+            // Show/hide ground options
+            const groundOptions = document.getElementById('groundOptions');
+            if (type === 'ground') {
+                groundOptions.classList.remove('hide');
+            } else {
+                groundOptions.classList.add('hide');
+                // Reset ground option values when not ground installation
+                document.getElementById('excavationMeters').value = 0;
+                document.getElementById('cableMeters').value = 0;
+            }
             
             calculatePrice();
         }
@@ -966,19 +1009,12 @@
                     selectedPower = complete.power;
                     productName = complete.name;
                     
-                    // Add specific battery model price if selected
+                    // For complete packages, battery model selection is just for display
+                    // Price is already included in the complete package price
                     if (batteryModelId) {
                         const selectedBattery = products.batteries.find(b => b.id == batteryModelId);
                         if (selectedBattery) {
-                            totalPrice += selectedBattery.price + selectedBattery.markup;
-                            productName += ` + ${selectedBattery.name}`;
-                        }
-                    } else {
-                        // Fallback to old markup system if no specific model selected
-                        if (selectedBatteryPower === 10) {
-                            totalPrice += batteryMarkups['10'];
-                        } else if (selectedBatteryPower === 15) {
-                            totalPrice += batteryMarkups['15'];
+                            productName += ` (${selectedBattery.name})`;
                         }
                     }
                 }
@@ -992,10 +1028,30 @@
 
             // Add installation costs
             if (selectedPower > 0) {
+                console.log('Calculating installation costs:', {
+                    selectedPower,
+                    installationType,
+                    flatCost: installationCosts.flat,
+                    groundCost: installationCosts.ground
+                });
+                
                 if (installationType === 'flat') {
-                    totalPrice += selectedPower * installationCosts.flat;
-                } else if (installationType === 'ground') {
-                    totalPrice += selectedPower * installationCosts.ground;
+                    const installCost = selectedPower * installationCosts.flat;
+                    totalPrice += installCost;
+                    console.log('Added flat roof cost:', installCost);
+                } else                 if (installationType === 'ground') {
+                    const installCost = selectedPower * installationCosts.ground;
+                    totalPrice += installCost;
+                    console.log('Added ground cost:', installCost);
+                    
+                    // Add excavation and cable costs
+                    const excavationMeters = parseFloat(document.getElementById('excavationMeters').value) || 0;
+                    const cableMeters = parseFloat(document.getElementById('cableMeters').value) || 0;
+                    const excavationCost = excavationMeters * installationCosts.excavationPerMeter;
+                    const cableCost = cableMeters * installationCosts.cablePerMeter;
+                    
+                    totalPrice += excavationCost + cableCost;
+                    console.log('Added excavation cost:', excavationCost, 'Cable cost:', cableCost);
                 }
             }
 
@@ -1079,33 +1135,43 @@
             calculateCredit();
         }
 
-        // Calculate credit - CORRECTED VERSION
+        // Calculate credit - FIXED VERSION
         function calculateCredit() {
             const grossPrice = parseFloat(document.getElementById('priceGross').textContent.replace(/[^\d]/g, '')) || 0;
             const downPaymentAmount = parseFloat(document.getElementById('downPaymentAmount').value) || 0;
             const creditAmount = grossPrice - downPaymentAmount;
-            const interestRate = parseFloat(document.getElementById('bankSelect').value) / 100 / 12;
+            const annualRate = parseFloat(document.getElementById('bankSelect').value) / 100;
+            const monthlyRate = annualRate / 12;
             const months = parseFloat(document.getElementById('creditPeriod').value) * 12;
 
-            if (creditAmount > 0 && months > 0 && interestRate > 0) {
-                // Calculate monthly payment before subsidy (from gross price)
-                const monthlyPayment = creditAmount * (interestRate * Math.pow(1 + interestRate, months)) / (Math.pow(1 + interestRate, months) - 1);
-                const totalCost = monthlyPayment * months;
+            if (creditAmount > 0 && months > 0 && monthlyRate > 0) {
+                // Calculate monthly payment before subsidy using correct PMT formula
+                const monthlyPayment = creditAmount * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+                const totalCostBeforeSubsidy = monthlyPayment * months + downPaymentAmount;
 
-                // Calculate credit amount after subsidies and tax relief
+                // Calculate amounts after subsidies and tax relief
                 const finalPrice = parseFloat(document.getElementById('finalPrice').textContent.replace(/[^\d]/g, '')) || 0;
                 const creditAmountAfter = Math.max(0, finalPrice - downPaymentAmount);
                 
                 let monthlyPaymentAfter = 0;
-                if (creditAmountAfter > 0 && months > 0 && interestRate > 0) {
-                    // FIXED: Calculate monthly payment for the reduced loan amount
-                    monthlyPaymentAfter = creditAmountAfter * (interestRate * Math.pow(1 + interestRate, months)) / (Math.pow(1 + interestRate, months) - 1);
+                let totalCostAfter = downPaymentAmount;
+                
+                if (creditAmountAfter > 0 && months > 0 && monthlyRate > 0) {
+                    // Calculate monthly payment for the reduced loan amount
+                    monthlyPaymentAfter = creditAmountAfter * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+                    totalCostAfter = monthlyPaymentAfter * months + downPaymentAmount;
                 }
 
                 document.getElementById('creditAmount').textContent = `${Math.round(creditAmount).toLocaleString()} zł`;
                 document.getElementById('monthlyPayment').textContent = `${Math.round(monthlyPayment).toLocaleString()} zł`;
                 document.getElementById('monthlyPaymentAfter').textContent = `${Math.round(monthlyPaymentAfter).toLocaleString()} zł`;
-                document.getElementById('totalCost').textContent = `${Math.round(totalCost).toLocaleString()} zł`;
+                document.getElementById('totalCost').textContent = `${Math.round(totalCostBeforeSubsidy).toLocaleString()} zł`;
+            } else if (creditAmount <= 0) {
+                // No credit needed - paid in full
+                document.getElementById('creditAmount').textContent = '0 zł';
+                document.getElementById('monthlyPayment').textContent = '0 zł';
+                document.getElementById('monthlyPaymentAfter').textContent = '0 zł';
+                document.getElementById('totalCost').textContent = `${Math.round(grossPrice).toLocaleString()} zł`;
             } else {
                 document.getElementById('creditAmount').textContent = '0 zł';
                 document.getElementById('monthlyPayment').textContent = '0 zł';
@@ -1126,9 +1192,19 @@
                  async function saveInstallationCosts() {
              installationCosts.flat = parseFloat(document.getElementById('flatRoofCost').value) || 200;
              installationCosts.ground = parseFloat(document.getElementById('groundCost').value) || 600;
+             installationCosts.excavationPerMeter = parseFloat(document.getElementById('excavationCost').value) || 40;
+             installationCosts.cablePerMeter = parseFloat(document.getElementById('cableCost').value) || 20;
              
              document.getElementById('flatRoofDisplay').textContent = installationCosts.flat;
              document.getElementById('groundDisplay').textContent = installationCosts.ground;
+             document.getElementById('excavationDisplay').textContent = installationCosts.excavationPerMeter;
+             document.getElementById('cableDisplay').textContent = installationCosts.cablePerMeter;
+             
+             // Update labels in ground options
+             const excavationCostDisplay = document.getElementById('excavationCostDisplay');
+             const cableCostDisplay = document.getElementById('cableCostDisplay');
+             if (excavationCostDisplay) excavationCostDisplay.textContent = installationCosts.excavationPerMeter;
+             if (cableCostDisplay) cableCostDisplay.textContent = installationCosts.cablePerMeter;
              
              await saveData();
              calculatePrice();
@@ -1139,8 +1215,19 @@
             document.getElementById('battery15kwMarkup').value = batteryMarkups['15'];
             document.getElementById('flatRoofCost').value = installationCosts.flat;
             document.getElementById('groundCost').value = installationCosts.ground;
+            document.getElementById('excavationCost').value = installationCosts.excavationPerMeter || 40;
+            document.getElementById('cableCost').value = installationCosts.cablePerMeter || 20;
+            
             document.getElementById('flatRoofDisplay').textContent = installationCosts.flat;
             document.getElementById('groundDisplay').textContent = installationCosts.ground;
+            document.getElementById('excavationDisplay').textContent = installationCosts.excavationPerMeter || 40;
+            document.getElementById('cableDisplay').textContent = installationCosts.cablePerMeter || 20;
+            
+            // Update labels in ground options
+            const excavationCostDisplay = document.getElementById('excavationCostDisplay');
+            const cableCostDisplay = document.getElementById('cableCostDisplay');
+            if (excavationCostDisplay) excavationCostDisplay.textContent = installationCosts.excavationPerMeter || 40;
+            if (cableCostDisplay) cableCostDisplay.textContent = installationCosts.cablePerMeter || 20;
         }
 
         // Admin functions
@@ -1430,7 +1517,7 @@
         window.addBank = addBank;
         window.updateBank = updateBank;
         window.deleteBank = deleteBank;
-                 window.refreshData = refreshData;
+        window.refreshData = refreshData;
          window.restoreDefaultData = restoreDefaultData;
          window.downloadBackup = downloadBackup;
 
