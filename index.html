@@ -920,7 +920,6 @@
         // Installation type selection
         function selectInstallation(type) {
             installationType = type;
-            console.log('Installation type selected:', type, 'Cost per kW:', installationCosts[type] || 0);
             
             document.querySelectorAll('[id^="install-"]').forEach(card => {
                 card.classList.remove('border-blue-500', 'bg-blue-50');
@@ -1028,21 +1027,12 @@
 
             // Add installation costs
             if (selectedPower > 0) {
-                console.log('Calculating installation costs:', {
-                    selectedPower,
-                    installationType,
-                    flatCost: installationCosts.flat,
-                    groundCost: installationCosts.ground
-                });
-                
                 if (installationType === 'flat') {
                     const installCost = selectedPower * installationCosts.flat;
                     totalPrice += installCost;
-                    console.log('Added flat roof cost:', installCost);
-                } else                 if (installationType === 'ground') {
+                } else if (installationType === 'ground') {
                     const installCost = selectedPower * installationCosts.ground;
                     totalPrice += installCost;
-                    console.log('Added ground cost:', installCost);
                     
                     // Add excavation and cable costs
                     const excavationMeters = parseFloat(document.getElementById('excavationMeters').value) || 0;
@@ -1051,7 +1041,6 @@
                     const cableCost = cableMeters * installationCosts.cablePerMeter;
                     
                     totalPrice += excavationCost + cableCost;
-                    console.log('Added excavation cost:', excavationCost, 'Cable cost:', cableCost);
                 }
             }
 
@@ -1290,13 +1279,20 @@
                 const div = document.createElement('div');
                 div.className = 'product-item bg-white border rounded-lg p-4';
                 div.draggable = true;
+                
+                // Build power field for panels and completes
+                let powerField = '';
+                if (type === 'panels' || type === 'completes') {
+                    powerField = ` | <span>Moc: </span><span contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'power', this.textContent)">${product.power || 0}</span> kW`;
+                }
+                
                 div.innerHTML = `
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <h5 class="font-semibold text-gray-800" contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'name', this.textContent)">${product.name}</h5>
                             <div class="text-sm text-gray-600 mt-1">
                                 <span>Cena: </span><span contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'price', this.textContent)">${product.price}</span> zł | 
-                                <span>Narzut: </span><span contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'markup', this.textContent)">${product.markup}</span> zł
+                                <span>Narzut: </span><span contenteditable="true" onblur="updateProduct('${type}', ${product.id}, 'markup', this.textContent)">${product.markup}</span> zł${powerField}
                             </div>
                         </div>
                         <button onclick="deleteProduct('${type}', ${product.id})" class="text-red-500 hover:text-red-700 ml-4">
