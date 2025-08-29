@@ -566,18 +566,32 @@
                 {id: 6, name: '10kW Canadian Solar', price: 14000, markup: 2500, power: 10}
             ],
             batteries: [
-                {id: 1, name: '5.12kWh Lithtech', price: 11000, markup: 5000},
-                {id: 2, name: '10.24kWh Lithtech', price: 13000, markup: 5000},
-                {id: 3, name: '16.076kWh Lithtech', price: 16000, markup: 5500}
+                {id: 1, name: 'Deye 5,12 kWh', price: 22000, markup: 0},
+                {id: 4, name: 'V-Tac 5,12 kWh', price: 22000, markup: 0},
+                {id: 7, name: 'Felicity 5 kWh ', price: 22000, markup: 0},
+                {id: 8, name: 'Felicity 10 kWh', price: 25000, markup: 0},
+                {id: 9, name: 'Felicity 15 kWh', price: 28000, markup: 0}
             ],
             inverters: [
                 {id: 1, name: '5kW Falownik Deye', price: 2500, markup: 500},
-                {id: 2, name: '10kW Falownik Deye', price: 4000, markup: 800}
+                {id: 2, name: '8kW Falownik Deye', price: 3500, markup: 700},
+                {id: 3, name: '10kW Falownik Deye', price: 4000, markup: 800}
             ],
             completes: [
-                {id: 1, name: '5kW + 5.12kWh Komplet', price: 32000, markup: 3000, power: 5},
-                {id: 2, name: '8kW + 10.24kWh Komplet', price: 42000, markup: 5000, power: 8},
-                {id: 3, name: '10kW + 16.076kWh Komplet', price: 46000, markup: 6000, power: 10}
+                {id: 1, name: '3,56 kW + ME', price: 27320, markup: 0, power: 3.56},
+                {id: 2, name: '4,00 kW + ME', price: 28020, markup: 0, power: 4.00},
+                {id: 3, name: '4,45 kW + ME', price: 28500, markup: 0, power: 4.45},
+                {id: 4, name: '4,89 kW + ME', price: 29020, markup: 0, power: 4.89},
+                {id: 5, name: '5,34 kW + ME', price: 29500, markup: 0, power: 5.34},
+                {id: 6, name: '5,78 kW + ME', price: 30020, markup: 0, power: 5.78},
+                {id: 7, name: '6,23 kW + ME', price: 30660, markup: 0, power: 6.23},
+                {id: 8, name: '6,67 kW + ME', price: 33120, markup: 0, power: 6.67},
+                {id: 9, name: '7,12 kW + ME', price: 33820, markup: 0, power: 7.12},
+                {id: 10, name: '7,56 kW + ME', price: 34520, markup: 0, power: 7.56},
+                {id: 11, name: '8,45 kW + ME', price: 35600, markup: 0, power: 8.45},
+                {id: 12, name: '8,90 kW + ME', price: 36200, markup: 0, power: 8.90},
+                {id: 13, name: '9,34 kW + ME', price: 36700, markup: 0, power: 9.34},
+                {id: 14, name: '9,79 kW + ME', price: 37200, markup: 0, power: 9.79}
             ]
         };
 
@@ -662,6 +676,8 @@
                     }
                 } else {
                     console.log("No products document found, using default data");
+                    // Save default data to Firebase
+                    await saveData();
                 }
 
                 const banksDoc = await db.collection('data').doc('banks').get();
@@ -808,19 +824,35 @@
             batteryModelSelect.innerHTML = '<option value="">Wybierz model...</option>';
             
             // Filter batteries by capacity (approximately matching power)
+            console.log('Power selected:', power);
+            console.log('Available batteries at filtering time:', products.batteries);
+            
             const filteredBatteries = products.batteries.filter(battery => {
                 const name = battery.name.toLowerCase();
+                console.log(`Checking battery "${name}" for power ${power}kWh`);
+                
+                let match = false;
                 if (power === 5) {
-                    return name.includes('5') && (name.includes('kwh') || name.includes('5,12'));
+                    match = name.includes('5,12') || name.includes('5.12') || (name.includes('5') && name.includes('kwh'));
                 } else if (power === 10) {
-                    return name.includes('10') && name.includes('kwh');
+                    match = name.includes('10') && name.includes('kwh');
                 } else if (power === 15) {
-                    return name.includes('15') && name.includes('kwh');
+                    // First try to find 15kWh, if not found, show 10kWh as fallback
+                    match = (name.includes('15') && name.includes('kwh')) || 
+                           (name.includes('10') && name.includes('kwh'));
                 }
-                return false;
+                
+                console.log(`Battery "${name}" match result:`, match);
+                return match;
             });
             
-            filteredBatteries.forEach(battery => {
+            console.log('Filtered batteries result:', filteredBatteries);
+            
+            // If no batteries found, show all as fallback
+            const batteriesToShow = filteredBatteries.length > 0 ? filteredBatteries : products.batteries;
+            console.log('Batteries to show:', batteriesToShow);
+            
+            batteriesToShow.forEach(battery => {
                 const option = document.createElement('option');
                 option.value = battery.id;
                 option.textContent = battery.name;
@@ -901,7 +933,17 @@
              // Update inverter select
              const inverterSelect = document.getElementById('inverterSelect');
              inverterSelect.innerHTML = '<option value="">Wybierz falownik...</option>';
-             products.inverters.forEach(inverter => {
+             
+             // Filter inverters based on category
+             let invertersToShow = products.inverters;
+             if (currentCategory === 'pv') {
+                 // For PV expansion, show only 8kW inverter
+                 invertersToShow = products.inverters.filter(inverter => 
+                     inverter.name.toLowerCase().includes('8kw') || inverter.name.toLowerCase().includes('8 kw')
+                 );
+             }
+             
+             invertersToShow.forEach(inverter => {
                  const option = document.createElement('option');
                  option.value = inverter.id;
                  option.textContent = inverter.name;
@@ -1025,15 +1067,13 @@
                 const inverterId = document.getElementById('inverterSelect').value;
                 const batteryModelId = document.getElementById('batteryModelSelect').value;
                 
-                console.log('Complete selection:', {completeId, inverterId, batteryModelId});
-                
                 if (completeId) {
                     const complete = products.completes.find(c => c.id == completeId);
-                    console.log('Found complete:', complete);
-                    totalPrice += complete.price + complete.markup;
-                    selectedPower = complete.power;
-                    productName = complete.name;
-                    console.log('Set selectedPower to:', selectedPower);
+                    if (complete) {
+                        totalPrice += complete.price + complete.markup;
+                        selectedPower = complete.power;
+                        productName = complete.name;
+                    }
                     
                     // For complete packages, battery model selection is just for display
                     // Price is already included in the complete package price
