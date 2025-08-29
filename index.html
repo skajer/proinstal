@@ -858,9 +858,7 @@
 
                  // Update product lists
          function updateProductLists() {
-             console.log('Updating product lists, products:', products);
-             
-             // Update PV select
+              // Update PV select
              const pvSelect = document.getElementById('pvSelect');
              pvSelect.innerHTML = '<option value="">Wybierz moc instalacji...</option>';
              products.panels.forEach(panel => {
@@ -883,13 +881,11 @@
              // Update complete select
              const completeSelect = document.getElementById('completeSelect');
              completeSelect.innerHTML = '<option value="">Wybierz komplet...</option>';
-             console.log('Available completes:', products.completes);
              products.completes.forEach(complete => {
                  const option = document.createElement('option');
                  option.value = complete.id;
                  option.textContent = complete.name;
                  completeSelect.appendChild(option);
-                 console.log('Added complete option:', complete.id, complete.name);
              });
 
              // Show/hide battery power selection for complete
@@ -951,19 +947,9 @@
             
             // Show/hide ground options
             const groundOptions = document.getElementById('groundOptions');
-            console.log('Installation type selected:', type, 'Ground options element:', !!groundOptions);
             if (groundOptions) {
                 if (type === 'ground') {
                     groundOptions.classList.remove('hide');
-                    console.log('Ground options should now be visible');
-                    
-                    // Check if input fields exist
-                    const excavationEl = document.getElementById('excavationMeters');
-                    const cableEl = document.getElementById('cableMeters');
-                    console.log('Ground input fields:', {
-                        excavationEl: !!excavationEl,
-                        cableEl: !!cableEl
-                    });
                 } else {
                     groundOptions.classList.add('hide');
                     // Reset ground option values when not ground installation
@@ -1209,28 +1195,26 @@
             calculateCredit();
         }
 
-        // Calculate credit - FIXED VERSION
+        // Calculate credit - SIMPLIFIED VERSION with simple interest
         function calculateCredit() {
             const grossPrice = parseFloat(document.getElementById('priceGross').textContent.replace(/[^\d]/g, '')) || 0;
             const downPaymentAmount = parseFloat(document.getElementById('downPaymentAmount').value) || 0;
             const creditAmount = grossPrice - downPaymentAmount;
             const annualRate = parseFloat(document.getElementById('bankSelect').value) / 100;
-            const monthlyRate = annualRate / 12;
-            const months = parseFloat(document.getElementById('creditPeriod').value) * 12;
-            
-            console.log('Credit calculation inputs:', {
-                grossPrice,
-                downPaymentAmount,
-                creditAmount,
-                annualRate,
-                monthlyRate,
-                months
-            });
+            const years = parseFloat(document.getElementById('creditPeriod').value);
 
-            if (creditAmount > 0 && months > 0 && monthlyRate > 0) {
-                // Calculate monthly payment before subsidy using correct PMT formula
-                const monthlyPayment = creditAmount * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
-                const totalCostBeforeSubsidy = monthlyPayment * months + downPaymentAmount;
+            if (creditAmount > 0 && years > 0 && annualRate > 0) {
+                // 1. Calculate simple interest: Odsetki = Kwota kredytu × Oprocentowanie roczne × Liczba lat
+                const interest = creditAmount * annualRate * years;
+                
+                // 2. Calculate total repayment: Całkowita spłata = Kwota kredytu + Odsetki
+                const totalRepayment = creditAmount + interest;
+                
+                // 3. Calculate monthly payment: Rata miesięczna = Całkowita spłata / (Liczba lat × 12)
+                const monthlyPayment = totalRepayment / (years * 12);
+                
+                // Total cost including down payment
+                const totalCostBeforeSubsidy = totalRepayment + downPaymentAmount;
 
                 // Calculate amounts after subsidies and tax relief
                 const finalPrice = parseFloat(document.getElementById('finalPrice').textContent.replace(/[^\d]/g, '')) || 0;
@@ -1239,16 +1223,29 @@
                 let monthlyPaymentAfter = 0;
                 let totalCostAfter = downPaymentAmount;
                 
-                if (creditAmountAfter > 0 && months > 0 && monthlyRate > 0) {
-                    // Calculate monthly payment for the reduced loan amount
-                    monthlyPaymentAfter = creditAmountAfter * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
-                    totalCostAfter = monthlyPaymentAfter * months + downPaymentAmount;
+                if (creditAmountAfter > 0) {
+                    // Same calculation for reduced amount
+                    const interestAfter = creditAmountAfter * annualRate * years;
+                    const totalRepaymentAfter = creditAmountAfter + interestAfter;
+                    monthlyPaymentAfter = totalRepaymentAfter / (years * 12);
+                    totalCostAfter = totalRepaymentAfter + downPaymentAmount;
                 }
 
                 document.getElementById('creditAmount').textContent = `${Math.round(creditAmount).toLocaleString()} zł`;
                 document.getElementById('monthlyPayment').textContent = `${Math.round(monthlyPayment).toLocaleString()} zł`;
                 document.getElementById('monthlyPaymentAfter').textContent = `${Math.round(monthlyPaymentAfter).toLocaleString()} zł`;
                 document.getElementById('totalCost').textContent = `${Math.round(totalCostBeforeSubsidy).toLocaleString()} zł`;
+                
+                console.log('Credit calculation (simple interest):', {
+                    creditAmount,
+                    annualRate,
+                    years,
+                    interest,
+                    totalRepayment,
+                    monthlyPayment,
+                    totalCostBeforeSubsidy
+                });
+                
             } else if (creditAmount <= 0) {
                 // No credit needed - paid in full
                 document.getElementById('creditAmount').textContent = '0 zł';
