@@ -824,35 +824,32 @@
             batteryModelSelect.innerHTML = '<option value="">Wybierz model...</option>';
             
             // Filter batteries by capacity (approximately matching power)
-            console.log('Power selected:', power);
-            console.log('Available batteries at filtering time:', products.batteries);
+            console.log(`Filtrowanie dla mocy: ${power}kWh`);
+            console.log('Dostępne magazyny:', products.batteries.map(b => b.name));
             
             const filteredBatteries = products.batteries.filter(battery => {
                 const name = battery.name.toLowerCase();
-                console.log(`Checking battery "${name}" for power ${power}kWh`);
                 
-                let match = false;
                 if (power === 5) {
-                    match = name.includes('5,12') || name.includes('5.12') || (name.includes('5') && name.includes('kwh'));
+                    const match = name.includes('5,12') || name.includes('5.12') || (name.includes('5') && name.includes('kwh'));
+                    console.log(`${battery.name}: ${match} (5kWh)`);
+                    return match;
                 } else if (power === 10) {
-                    match = name.includes('10') && name.includes('kwh');
+                    const match = name.includes('10') && name.includes('kwh');
+                    console.log(`${battery.name}: ${match} (10kWh)`);
+                    return match;
                 } else if (power === 15) {
-                    // First try to find 15kWh, if not found, show 10kWh as fallback
-                    match = (name.includes('15') && name.includes('kwh')) || 
-                           (name.includes('10') && name.includes('kwh'));
+                    const match = name.includes('15') && name.includes('kwh');
+                    console.log(`${battery.name}: ${match} (15kWh)`);
+                    return match;
                 }
-                
-                console.log(`Battery "${name}" match result:`, match);
-                return match;
+                console.log(`${battery.name}: false (nieznana moc)`);
+                return false;
             });
             
-            console.log('Filtered batteries result:', filteredBatteries);
+            console.log('Przefiltrowane magazyny:', filteredBatteries.map(b => b.name));
             
-            // If no batteries found, show all as fallback
-            const batteriesToShow = filteredBatteries.length > 0 ? filteredBatteries : products.batteries;
-            console.log('Batteries to show:', batteriesToShow);
-            
-            batteriesToShow.forEach(battery => {
+            filteredBatteries.forEach(battery => {
                 const option = document.createElement('option');
                 option.value = battery.id;
                 option.textContent = battery.name;
